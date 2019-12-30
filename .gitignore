@@ -1,0 +1,10 @@
+**/log*.txt
+**/*.swp
+**/node_modules
+**/package-lock.json
+**/test*
+**/*user*.json
+**/.nfs*
+**/client/*.json
+!src/client/default-task-settings.json
+!src/client/default-user-info.json

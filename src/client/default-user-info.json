@@ -1,0 +1,17 @@
+{
+    "user": {
+        "username": "",
+        "password": ""
+    },
+    "app": {
+        "access_token": "",
+        "refresh_token": ""
+    },
+    "web": {
+        "bili_jct": "",
+        "DedeUserID": "",
+        "DedeUserID__ckMd5": "",
+        "sid": "",
+        "SESSDATA": ""
+    }
+}

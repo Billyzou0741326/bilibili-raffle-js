@@ -1,0 +1,10 @@
+{
+    "httpServer": {
+        "ip": "127.0.0.1",
+        "port": 8899
+    },
+    "wsServer": {
+        "ip": "warpgate.cat.pdx.edu",
+        "port": 8999
+    }
+}

@@ -1,0 +1,96 @@
+{
+    "pk": {
+        "type": "scheduled",
+        "status": 1,
+        "timeperiod": [
+            {
+                "from": {
+                    "hours": 8,
+                    "minutes": 0
+                },
+                "to": {
+                    "hours": 0,
+                    "minutes": 45
+                }
+            }
+        ]
+    },
+    "gift": {
+        "type": "scheduled",
+        "status": 1,
+        "timeperiod": [
+            {
+                "from": {
+                    "hours": 8,
+                    "minutes": 0
+                },
+                "to": {
+                    "hours": 0,
+                    "minutes": 45
+                }
+            }
+        ]
+    },
+    "guard": {
+        "type": "scheduled",
+        "status": 1,
+        "timeperiod": [
+            {
+                "from": {
+                    "hours": 8,
+                    "minutes": 0
+                },
+                "to": {
+                    "hours": 0,
+                    "minutes": 45
+                }
+            }
+        ]
+    },
+    "liveheart": {
+        "type": "scheduled",
+        "status": 1,
+        "timeperiod": [
+            {
+                "from": {
+                    "hours": 8,
+                    "minutes": 0
+                },
+                "to": {
+                    "hours": 0,
+                    "minutes": 45
+                }
+            }
+        ]
+    },
+    "livesign": {
+        "type": "daily",
+        "status": 1,
+        "timeperiod": null
+    },
+    "idolclubsign": {
+        "type": "daily",
+        "status": 1,
+        "timeperiod": null
+    },
+    "mainsharevideo": {
+        "type": "daily",
+        "status": 1,
+        "timeperiod": null
+    },
+    "mainwatchvideo": {
+        "type": "daily",
+        "status": 1,
+        "timeperiod": null
+    },
+    "silverbox": {
+        "type": "daily",
+        "status": 1,
+        "timeperiod": null
+    },
+    "doublewatch": {
+        "type": "daily",
+        "status": 1,
+        "timeperiod": null
+    }
+}
