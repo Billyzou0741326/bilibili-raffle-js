@@ -1,11 +1,14 @@
-# bilibili-raffle-js
+# bilibili-raffle-js (b站直播挂机、高能+舰长抽取)
+![Github](https://img.shields.io/github/license/Billyzou0741326/bilibili-live-raffle-monitor)
+![Github](https://img.shields.io/badge/nodejs-10.16.3-blue)
 
 ## Info
  - 此程序不收集任何用户信息/数据
- - 包括[bilibili-live-monitor-js](#https://github.com/Billyzou0741326/bilibili-live-monitor-js)在内的所有项目永久开源 没有闭源的打算 亦不接受打赏
+ - 可自建服务器[bilibili-live-monitor-js](https://github.com/Billyzou0741326/bilibili-live-monitor-js), 也可以用默认的设定
+ - 包括[bilibili-live-monitor-js](https://github.com/Billyzou0741326/bilibili-live-monitor-js)在内的所有项目永久开源 没有闭源的打算 亦不接受打赏
  - 实力不济没能写出更多功能 代码也非常难看23333
  - 有bug请务必反馈 Issues就是用来讨论的
- - 祝各位白嫖愉快
+ - 祝各位白嫖愉快~
 
 ## Features
  - 主站观看视频 (mainwatchvideo)
@@ -81,9 +84,10 @@
 ### 任务设置
 
  - **Config file `/src/client/default-task-settings.json`**
- - **!!!暂未写入任务读取逻辑**
- - 默认所有任务开启，所有抽奖、心跳任务于北京时间 08:00 - 0:45 执行
+ - **"status": 1 为开启** **"status": 0 为关闭**
+ - 默认所有任务开启，所有抽奖、心跳任务于北京时间 08:00 - 0:45 时间段执行
  - 修改from、to的hours、minutes数值可以自定义抽奖时间段
+ - 还请不要修改type ~
 
 ```javascript
 {
