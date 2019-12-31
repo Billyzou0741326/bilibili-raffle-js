@@ -47,10 +47,13 @@
         json() {
             let tp = null;
             if (this.start !== null && this.end !== null) {
-                const from_hours = Number.parseInt(this.start / (1000 * 60 * 60) + 8) % 24;
-                const from_minutes = Number.parseInt(this.start / (1000 * 60)) % 60;
-                const to_hours = Number.parseInt(this.end / (1000 * 60 * 60) + 8) % 24;
-                const to_minutes = Number.parseInt(this.end / (1000 * 60)) % 60;
+                const offset = new Date().getTimezoneOffset();
+                const from = new Date(this.start);
+                const from_hours = from.getHours();
+                const from_minutes = from.getMinutes();
+                const to = new Date(this.end);
+                const to_hours = to.getHours();
+                const to_minutes = to.getMinutes();
                 tp = {
                     'from': {
                         'hours': from_hours,

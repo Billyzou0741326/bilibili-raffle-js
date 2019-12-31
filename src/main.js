@@ -2,8 +2,6 @@
 
     'use strict';
 
-    process.env.TZ = 'Asia/Shanghai';
-
     const http = require('http');
 
     const cprint = require('./util/printer.js');
@@ -94,13 +92,13 @@
         (notifier
             .on('liveHeart', () => account.execute('liveheart'))
             .on('midnight', () => {
-                async () => {
+                (async () => {
                     await account.execute('livesign');
                     await account.execute('idolclubsign');
                     await account.execute('mainsharevideo');
                     await account.execute('mainwatchvideo');
                     await account.execute('doublewatch');
-                }
+                })();
                 account.execute('silverbox');
             }));
 
