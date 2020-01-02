@@ -2,6 +2,7 @@
 
     'use strict';
 
+    const Clock = require('./tasks/clock.js');
     const EventEmitter = require('events').EventEmitter;
 
     class Notifier extends EventEmitter {
@@ -13,7 +14,7 @@
                 'liveHeart': null,
                 'midnight': null,
             };
-            this.day = new Date().getDay();
+            this.day = new Clock().getDay();
         }
 
         run() {
@@ -24,7 +25,7 @@
             }
             if (this.tasks['midnight'] === null) {
                 this.tasks['midnight'] = setInterval(() => {
-                    const day = new Date().getDay();
+                    const day = new Clock().getDay();
                     if (this.day !== day) {
                         this.emit('midnight');
                         this.day = day;
