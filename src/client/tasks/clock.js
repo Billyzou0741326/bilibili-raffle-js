@@ -14,7 +14,9 @@
         }
 
         constructor(...args) {
-            super(...args);
+            // Convert date to Beijing Time
+            const chinaTime = new Date(...args).toLocaleString("en-US", {timeZone: "Asia/Shanghai"});
+            super(chinaTime);
         }
 
     }
