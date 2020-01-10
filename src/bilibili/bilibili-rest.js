@@ -15,22 +15,8 @@
         appSecret,
         appHeaders,
         webHeaders, } = require('../global/config.js');
-
-    const httpsAgent = (() => {
-        const options = {
-            'keepAlive': true,
-            'maxFreeSockets': 256,
-        };
-        return new https.Agent(options);
-    })();
-
-    const httpAgent = (() => {
-        const options = {
-            'keepAlive': true,
-            'maxFreeSockets': 256,
-        };
-        return new http.Agent(options);
-    })();
+    const Xhr = require('../net/xhr.js');
+    const RequestBuilder = require('../net/request.js');
 
 
     /** Emits requests to the bilibili API */
@@ -40,148 +26,108 @@
          * Send request, gets json as response
          * 发送请求，获取json返回
          * 
-         * @params  options    request details
-         * @params  useHttps   true: https   false: http
-         * @returns promise -> json / error
+         * @param   {Request}   req - Request details
+         * @returns {Promise}   resolve(JSON)   reject(Error)
          */
-        static request(options, settings) {
+        static request(req) {
 
-            let tries = 3;
-            let xhr = http;
-            let agent = httpAgent;
-            let useHttps = false;
-            let data = '';
-            let setCookies = settings;
-            if (settings) {
-                useHttps = settings.useHttps;
-                data = settings.data || '';
-                setCookies = settings.setCookies;
-            }
+            const acceptedCode = [ 200 ];
+            const noRetryCode = [ 412 ];
 
-            if (useHttps === true) {
-                xhr = https;
-                agent = httpsAgent;
-            }
-            options['agent'] = options['agent'] || agent;
+            const requestUntilDone = async () => {
 
-            const doRequest = async () => {
-                for (let i = 0; i < tries; ++i) {
+                let success = false;
+                let tries = 3;
+                let result = null;
+                let err = null;
+
+                while (success === false && tries > 0) {
                     try {
-                        let result = await newRequest();
-                        return result;
+                        const response = await xhr.request(req);
+                        const statusCode = response.status_code;
+                        const statusMsg = response.status_message;
+
+                        if (acceptedCode.includes(statusCode)) {
+                            result = response.json();
+                            err = null;
+                            success = true;
+                        } else if (noRetryCode.includes(statusCode)) {
+                            result = response;
+                            err = new Error(`Http status ${statusCode}: ${statusMessage}`);
+                            tries = 0;
+                        } else {
+                            err = new Error(`Http status ${statusCode}: ${statusMessage}`);
+                            --tries;
+                        }
                     } catch (error) {
-                        cprint(`${error}`, colors.red);
-                        cprint(`[ 修正 ${i} ]: 重现request`, colors.green);
+                        err = error;
+                        cprint(`\n${error.stack}`, colors.red);
                     }
                 }
-                return newRequest();
+
+                if (err) {
+                    throw err;
+                } else {
+                    return result;
+                }
             };
 
-            const acceptedStatus = [ 200 ];
-
-            const newRequest = () => new Promise((resolve, reject) => {
-
-                const req = xhr.request(options, (response) => {
-
-                    response.on('error', (error) => {
-                        reject(`Error: ${error.message}`);
-                    });
-                    if (acceptedStatus.includes(response.statusCode)) {
-                        let dataSequence = [];
-
-                        response.on('data', (data) => {
-                            dataSequence.push(data);
-                        });
-                        response.on('end', () => {
-                            const jsonStr = Buffer.concat(dataSequence).toString('utf8');
-                            try {
-                                const jsonObj = JSON.parse(jsonStr);
-
-                                if (setCookies)
-                                    Object.assign(setCookies, extractCookies(response));
-
-                                resolve(jsonObj);
-                            } catch (error) {
-                                reject(`Error: ${error.message}`);
-                            }
-                        });
-                    } else {
-                        reject(`Error: Response status code ${response.statusCode}`);
-                    }
-                }).on('error', (error) => {
-                    reject(`Error: ${error.message}`);
-                })
-                req.write(data);
-                req.end();
-            });
-
-            return doRequest();
+            return requestUntilDone();
         }
 
         /** app端获取房间内抽奖信息 */
         static appGetRaffleInRoom(roomid) {
-            const host = 'api.live.bilibili.com';
-            const path = '/xlive/lottery-interface/v1/lottery/getLotteryInfo';
-            const method = 'GET';
-            const headers = appHeaders;
-
             const params = {};
             Object.assign(params, appCommon);
             params['roomid'] = roomid;
             params['ts'] = Number.parseInt(0.001 * new Date());
-            const querystr = BilibiliRest.parseAppParams(sort(params));
 
-            const options = {
-                host,
-                'path': `${path}?${querystr}`,
-                method,
-                headers,
-            };
+            const request = (RequestBuilder.start()
+                .withHost('api.live.bilibili.com')
+                .withPath('/xlive/lottery-interface/v1/lottery/getLotteryInfo')
+                .withMethod('GET')
+                .withHeaders(appHeaders)
+                .withParams(params)
+                .build()
+            );
 
-            return BilibiliRest.request(options);
+            return BilibiliRest.request(request);
         }
 
         /** Check for lottery in room ``roomid``
          *
          */
         static getRaffleInRoom(roomid) {
-            const host = 'api.live.bilibili.com';
-            const path = '/xlive/lottery-interface/v1/lottery/Check';
-            const method = 'GET';
-            const headers = webHeaders;
             const params = { 'roomid': roomid, };
-            const query = querystring.stringify(params);
-            const options = {
-                'host': host,
-                'path': `${path}?${query}`,
-                'method': method,
-                'headers': headers,
-            };
+            const request = (RequestBuilder.start()
+                .withHost('api.live.bilibili.com')
+                .withPath('/xlive/lottery-interface/v1/lottery/Check')
+                .withMethod('GET')
+                .withHeaders(webHeaders)
+                .withParams(params)
+                .build()
+            );
 
-            return BilibiliRest.request(options);
+            return BilibiliRest.request(request);
         }
 
         /** 查取视频cid */
         static getVideoCid(aid) {
-            const host = 'api.bilibili.com';
-            const path = '/x/player/pagelist';
-            const method = 'GET';
-            const headers = webHeaders;
             const jsonp = 'jsonp';
             const params = { 
                 aid,
                 jsonp,
             };
-            const querystr = Bilibili.formatForm(params);
+            const request = (RequestBuilder.start()
+                .withHost('api.bilibili.com')
+                .withPath('/x/player/pagelist')
+                .withMethod('GET')
+                .withHeaders(webHeaders)
+                .withParams(params)
+                .build()
+            );
 
-            const options = {
-                host,
-                'path': `${path}?${querystr}`,
-                method,
-                headers,
-            };
-
-            return Bilibili.request(options);
+            return Bilibili.request(request);
         }
 
         static appSign(string) {
@@ -223,6 +169,8 @@
         });
         return sorted;
     };
+
+    const xhr = Xhr.newSession();
 
     const decodeCookies = (cookiestr) => {
         if (typeof cookiestr === 'undefinded') return {};

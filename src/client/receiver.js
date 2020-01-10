@@ -28,14 +28,20 @@
             this.onMessage = this.onMessage.bind(this);
 
             this.reconnectTask = null;
+            this.healthCheckTask = null;
         }
 
         reset() {
             this.ws = null;
+            if (this.healthCheckTask !== null) {
+                clearInterval(this.healthCheckTask);
+                this.healthCheckTask = null;
+            }
         }
 
         run() {
             if (this.ws === null) {
+                this.closedByUs = false;
                 this.ws = new ws(this.wsAddress);
                 this.ws.on('open', this.onOpen);
                 this.ws.on('ping', this.onPing);
@@ -47,10 +53,18 @@
 
         onOpen() {
             cprint(`[ Server ] Established connection with ${this.wsAddress}`, colors.green);
+            this.lastPing = +new Date();
             this.retries = 3;
             if (this.reconnectTask !== null) {
                 clearInterval(this.reconnectTask);
                 this.reconnectTask = null;
+            }
+            if (this.healthCheckTask === null) {
+                this.healthCheckTask = setInterval(() => {
+                    if (this.lastPing - new Date() > 25) {
+                        this.close(false);
+                    }
+                }, 5 * 1000);
             }
         }
 
@@ -70,7 +84,7 @@
             } else if (this.reconnectTask === null) {
                 this.reconnectTask = setInterval(() => {
                     this.run();
-                }, 30 * 1000);
+                }, 10 * 1000);
             }
         }
 
@@ -87,6 +101,7 @@
         }
 
         onPing() {
+            this.lastPing = +new Date();
             this.ws.pong();
         }
 
