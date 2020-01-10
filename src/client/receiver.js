@@ -61,7 +61,7 @@
             }
             if (this.healthCheckTask === null) {
                 this.healthCheckTask = setInterval(() => {
-                    if (this.lastPing - new Date() > 25) {
+                    if (new Date() - this.lastPing > 25000) {
                         this.close(false);
                     }
                 }, 5 * 1000);
@@ -90,7 +90,7 @@
 
         close(closedByUs=true) {
             this.closedByUs = closedByUs;
-            this.ws.close();
+            this.ws && this.ws.close();
             this.ws = null;
         }
 
