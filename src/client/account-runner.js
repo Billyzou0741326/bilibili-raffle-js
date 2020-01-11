@@ -297,37 +297,38 @@
             const execute = async () => {
                 let done = false;
                 while (!done) {
-                    Bilibili.liveTaskInfo(this.session).then(resp => {
+                    // await throws error when a promise is rejected.
+                    // execute().catch(...) will handle the error thrown
+                    const taskResp = await Bilibili.liveTaskInfo(this.session);
+                    const doubleStatus = taskResp['data']['double_watch_info']['status'];
+                    const awards = taskResp['data']['double_watch_info']['awards'];
 
-                        const doubleStatus = resp['data']['double_watch_info']['status'];
-                        const awards = resp['data']['double_watch_info']['awards'];
-
-                        if (doubleStatus === 1) {
-                            done = true;
-                            Bilibili.liveDoubleWatch(this.session).then(resp => {
-                                const code = resp['code'];
-                                const msg = resp['msg'] || resp['message'] || '';
-                                if (code !== 0) {
-                                    const failedText = `双端观看奖励领取失败: (${code})${msg}`;
-                                    cprint(failedText, colors.red);
-                                } else {
-                                    const awardTexts = awards.map(award => `${award.name}(${award.num})`);
-                                    const awardText = '双端观看奖励: ' + awardTexts.join('   ');
-                                    cprint(awardText, colors.green);
-                                }
-                            });
-                        } else if (doubleStatus === 2) {
-                            done = true;
+                    if (doubleStatus === 1) {
+                        done = true;
+                        const awardResp = await Bilibili.liveDoubleWatch(this.session);
+                        const code = awardResp['code'];
+                        const msg = awardResp['msg'] || awardResp['message'] || '';
+                        if (code !== 0) {
+                            const failedText = `双端观看奖励领取失败: (${code})${msg}`;
+                            cprint(failedText, colors.red);
+                        } else {
                             const awardTexts = awards.map(award => `${award.name}(${award.num})`);
-                            const awardText = '双端观看奖励已领取: ' + awardTexts.join('   ');
-                            cprint(awardText, colors.grey);
-                        } else if (doubleStatus === 0) {
-                            cprint('双端观看未完成', colors.green);
+                            const awardText = '双端观看奖励: ' + awardTexts.join('   ');
+                            cprint(awardText, colors.green);
                         }
-                    });
+                    } else if (doubleStatus === 2) {
+                        done = true;
+                        const awardTexts = awards.map(award => `${award.name}(${award.num})`);
+                        const awardText = '双端观看奖励已领取: ' + awardTexts.join('   ');
+                        cprint(awardText, colors.grey);
+                    } else if (doubleStatus === 0) {
+                        cprint('双端观看未完成', colors.green);
+                    }
                     
                     // Need to watch on web & app for at least 5 minutes. To be sure, wait for 6 minutes.
-                    await sleep(1000 * 60 * 6);
+                    if (done === false) {
+                        await sleep(1000 * 60 * 6);
+                    }
                 }
             };
 
@@ -506,11 +507,11 @@
                 const type = settings['type'];
                 const tpList = settings['timeperiod'];
                 if (type === 'daily' && reg) {
-                        this.register(taskname);
-                    }
+                    this.register(taskname);
+                }
                 if (type === 'scheduled' && reg) {
-                    const hasList = tpList !== null && Array.isArray(tpList)
-                        if (hasList && tpList.length > 0) {
+                    const hasList = tpList !== null && Array.isArray(tpList);
+                    if (hasList && tpList.length > 0) {
                         const tp = tpList[0];
                         const from = Clock.today();
                         const to = Clock.today();
@@ -518,8 +519,8 @@
                         to.setHours(tp['to']['hours'], tp['to']['minutes']);
                         const timeperiod = new TimePeriod(from, to);
                         this.register(taskname, { timeperiod });
+                    }
                 }
-            }
             });
         }
 
