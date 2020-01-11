@@ -92,13 +92,11 @@
         (notifier
             .on('liveHeart', () => account.execute('liveheart'))
             .on('midnight', () => {
-                (async () => {
-                    await account.execute('livesign');
-                    await account.execute('idolclubsign');
-                    await account.execute('mainsharevideo');
-                    await account.execute('mainwatchvideo');
-                    await account.execute('doublewatch');
-                })();
+                account.execute('livesign');
+                account.execute('idolclubsign');
+                account.execute('mainsharevideo');
+                account.execute('mainwatchvideo');
+                account.execute('doublewatch');
                 account.execute('silverbox');
             }));
 
@@ -131,12 +129,12 @@
     function executeInitial(account) {
         account.refreshToken();
         (async () => {
-            await account.execute('livesign');
-            await account.execute('idolclubsign');
-            await account.execute('mainsharevideo');
-            await account.execute('mainwatchvideo');
-            await account.execute('doublewatch');
-            await account.execute('liveheart');
+            account.execute('livesign');
+            account.execute('idolclubsign');
+            account.execute('mainsharevideo');
+            account.execute('mainwatchvideo');
+            account.execute('doublewatch');
+            account.execute('liveheart');
             account.execute('silverbox');
         })();
     }
