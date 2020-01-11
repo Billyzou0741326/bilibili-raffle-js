@@ -106,11 +106,7 @@
 
 
     function registerTasks(account) {
-        const from = Clock.today();
-        const to = Clock.today();
-        from.setHours(8, 0);
-        to.setHours(0, 45);
-        const tp = new TimePeriod(from, to);
+        const tp = [{from: { hours: 8, minutes: 0 }, to: { hours: 0, minutes: 45 }}];
 
         account.register('pk', { 'timeperiod': tp });
         account.register('gift', { 'timeperiod': tp });

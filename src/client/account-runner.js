@@ -10,7 +10,7 @@
     const Bilibili = require('../bilibili.js');
     const ScheduledTask = require('./tasks/scheduledtask.js');
     const DailyTask = require('./tasks/dailytask.js');
-    const TimePeriod = require('./tasks/timeperiod.js');
+    const WeeklySchedule = require('./tasks/weeklyschedule.js');
     const Clock = require('./tasks/clock.js');
     const { sleep, } = require('../util/utils.js');
 
@@ -79,13 +79,7 @@
             task.registerCallback(actions[taskname]);
 
             if (options) {
-                const tp = options.timeperiod;
-                if (tp) {
-                    if (Array.isArray(tp) === true)
-                        task.updateTimePeriod && task.updateTimePeriod(...tp);
-                    else
-                        task.updateTimePeriod && task.updateTimePeriod(tp);
-                }
+                task.updateTimePeriod && task.updateTimePeriod(new WeeklySchedule(options.timeperiod));
             }
 
             return true;
@@ -500,28 +494,21 @@
             }
             const str = fs.readFileSync(filename);
             const data = JSON.parse(str);
-            Object.entries(data).forEach(entry => {
-                const taskname = entry[0];
-                const settings = entry[1];
-                const reg = settings['status'] === 1;
-                const type = settings['type'];
-                const tpList = settings['timeperiod'];
-                if (type === 'daily' && reg) {
-                    this.register(taskname);
-                }
-                if (type === 'scheduled' && reg) {
-                    const hasList = tpList !== null && Array.isArray(tpList);
-                    if (hasList && tpList.length > 0) {
-                        const tp = tpList[0];
-                        const from = Clock.today();
-                        const to = Clock.today();
-                        from.setHours(tp['from']['hours'], tp['from']['minutes']);
-                        to.setHours(tp['to']['hours'], tp['to']['minutes']);
-                        const timeperiod = new TimePeriod(from, to);
-                        this.register(taskname, { timeperiod });
+            for (const [taskname, settings] of Object.entries(data)) {
+                if (settings.status === 1) {
+                    const type = settings.type;
+                    if (type === 'daily') {
+                        this.register(taskname);
+                    }
+                    else if (type === 'scheduled') {
+                        const tpList = settings.timeperiod;
+                        const hasList = tpList !== null && Array.isArray(tpList);
+                        if (hasList && tpList.length > 0) {
+                            this.register(taskname,  { 'timeperiod': tpList });
+                        }
                     }
                 }
-            });
+            }
         }
 
     }
