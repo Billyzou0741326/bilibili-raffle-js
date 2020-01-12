@@ -102,7 +102,7 @@
 
         onPing() {
             this.lastPing = +new Date();
-            this.ws.pong();
+            this.ws && this.ws.pong();
         }
 
         broadcast(gift) {
