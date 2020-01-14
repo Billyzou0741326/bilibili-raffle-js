@@ -23,7 +23,8 @@
             } else if (req.method === 'POST') {
                 return this.post(req);
             }
-            throw new HttpError(`Request method '${req.method}' not Implemented`);
+            return Promise.reject(
+                new HttpError(`Request method '${req.method}' not Implemented`));
         }
 
         get(req) {
@@ -34,48 +35,42 @@
                 agent = httpsAgent;
             }
 
-            const options = {
-                host: req.host,
-                port: req.port,
-                path: req.path,
-                method: req.method,
-                headers: req.headers,
-                agent: agent,
-            };
-
-            const makeResponse = (incomingMessage, data) => {
-                return (ResponseBuilder.start()
-                    .withUrl(`${req.host}${req.path}`)
-                    .withMethod(req.method)
-                    .withHttpResponse(incomingMessage)
-                    .withData(data)
-                    .build());
-            };
+            const options = req.toHttpOptions();
+            options['agent'] = agent;
 
             return new Promise((resolve, reject) => {
 
-                const request = xhr.request(options, response => {
+                const request = (this.sendRequest(options, xhr, req.data)
+                    .on('abort', () => {
+                        const err = new HttpError('Http request aborted');
+                        reject(err);
+                    })
+                    .on('error', error => {
+                        const err = new HttpError(error.message);
+                        reject(err);
+                    })
+                    .on('close', () => {
+                        const err = new HttpError('Http request closed');
+                        reject(err);
+                    })
+                    .on('response', response => {
+                        const code = response.statusCode;
 
-                    response.on('error', error => {
-                        reject(error);
-                    });
-
-                    if (response.statusCode === 200) {
                         const dataSequence = [];
                         response.on('data', data => dataSequence.push(data));
-                        response.on('end', () => resolve(
-                            makeResponse(response, Buffer.concat(dataSequence))));
-                    } else {
-                        resolve(
-                            makeResponse(response));
-                    }
-                }).on('timeout', () => {
-                    request.abort();
-                }).on('abort', () => {
-                    const err = new HttpError('Http request aborted');
-                    reject(err);
-                });
-                request.end();
+                        response.on('error', error => reject(error));
+
+                        if (code === 200) {
+                            response.on('end', () => resolve(
+                                this.makeResponse(
+                                    response, request, Buffer.concat(dataSequence))));
+                        } else {
+                            const err = (new HttpError(`http status ${code}`)
+                                .withStatus(code));
+                            reject(err);
+                        }
+                    })
+                );
             });
         }
 
@@ -87,51 +82,72 @@
                 agent = httpsAgent;
             }
 
-            const options = {
-                host: req.host,
-                port: req.port,
-                path: req.path,
-                method: req.method,
-                headers: req.headers,
-                agent: agent,
-            };
-
-            const makeResponse = (incomingMessage, data) => {
-                return (ResponseBuilder.start()
-                    .withHttpResponse(incomingMessage)
-                    .withData(data)
-                    .build());
-            };
+            const options = req.toHttpOptions();
+            options['agent'] = agent;
 
             return new Promise((resolve, reject) => {
 
-                const request = xhr.request(options, response => {
+                const request = (this.sendRequest(options, xhr, req.data)
+                    .on('timeout', () => {
+                        request.abort();
+                    })
+                    .on('abort', () => {
+                        const err = new HttpError('Http request aborted');
+                        reject(err);
+                    })
+                    .on('error', error => {
+                        const err = new HttpError(error.message);
+                        reject(err);
+                    })
+                    .on('close', () => {
+                        const err = new HttpError('Http request closed');
+                        reject(err);
+                    })
+                    .on('response', response => {
+                        const code = response.statusCode;
 
-                    response.on('error', error => {
-                        reject(error);
-                    });
-
-                    if (response.statusCode === 200) {
                         const dataSequence = [];
                         response.on('data', data => dataSequence.push(data));
-                        response.on('end', () => resolve(
-                            makeResponse(response, Buffer.concat(dataSequence))));
-                    } else {
-                        resolve(
-                            makeResponse(response));
-                    }
-                }).on('timeout', () => {
-                    request.abort();
-                }).on('abort', () => {
-                    const err = new HttpError('Http request aborted');
-                    reject(err);
-                });
-                if (req.data) {
-                    request.write(req.data);
-                }
-                request.end();
+                        response.on('aborted', () => reject(new HttpError('Http request aborted')));
+                        response.on('error', error => reject(error));
+
+                        if (code === 200) {
+                            response.on('end', () => resolve(
+                                this.makeResponse(
+                                    response, request, Buffer.concat(dataSequence))));
+                        } else {
+                            const err = (new HttpError(`http stauts ${code}`)
+                                .withStatus(code));
+                            reject(err);
+                        }
+                    }));
             });
         }
+
+        sendRequest(options, xhr, data) {
+            if (!xhr) xhr = https;
+            let request = (xhr.request(options));
+            if (data) {
+                request.write(data);
+            }
+            request.end();
+            return request;
+        }
+
+        makeResponse(incomingMessage, request, data) {
+            let url = '';
+            let method = '';
+            if (request) {
+                url = `${request.host}${request.path}`;
+                method = request.method;
+            }
+            return (ResponseBuilder.start()
+                .withHttpResponse(incomingMessage)
+                .withUrl(url)
+                .withMethod(method)
+                .withData(data)
+                .build());
+        };
     }
 
 
