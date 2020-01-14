@@ -26,6 +26,17 @@
             Object.freeze(this);
         }
 
+        toHttpOptions() {
+            const options = {
+                host:       this.host,
+                port:       this.port,
+                path:       this.path,
+                method:     this.method,
+                headers:    this.headers,
+            };
+            return options;
+        }
+
     }
 
     class RequestBuilder {
