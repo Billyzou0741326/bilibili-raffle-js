@@ -1,11 +1,21 @@
 {
     "httpServer": {
-        "ip": "127.0.0.1",
+        "host": "127.0.0.1",
         "port": 8899
     },
-    "wsServer": {
-        "ip": "warpgate.cat.pdx.edu",
-        "port": 8999
+    "wsServer": [
+        {
+            "host": "warpgate.cat.pdx.edu",
+            "port": 8999
+        }
+    ],
+    "receiver": {
+        "janitorInterval": 1,
+        "expiryThreshold": 5
+    },
+    "notifier": {
+        "heartbeatInterval": 5,
+        "midnightCheckInterval": 5
     },
     "account": {
         "maxRequestsPerSecond": 50,

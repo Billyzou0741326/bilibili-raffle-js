@@ -3,126 +3,91 @@
     'use strict';
 
     const EventEmitter = require('events').EventEmitter;
-    const ws = require('ws');
     const http = require('http');
 
     const cprint = require('../util/printer.js');
     const colors = require('colors/safe');
+    
+    const Connection = require('./connection.js');
 
+    const namedGifts = [
+        'guard',
+        'storm',
+        'pk',
+        'gift'
+    ];
+    
     class RaffleReceiver extends EventEmitter {
 
-        constructor(host, port) {
+        constructor(servers, options) {
             super();
-            this.host = host || '127.0.0.1';
-            this.port = port || 8999;
 
-            this.ws = null;
-            this.wsAddress = `ws://${this.host}:${this.port}`;
-            this.retries = 4;
-            this.closedByUs = false;
+            this.connections = [];
+            if (servers && servers.length > 0) {
+                servers.forEach(server => this.initServerConnection(server));
+            } else {
+                this.initServerConnection({
+                    'host': '127.0.0.1',
+                    'port': 8999
+                });
+            }
+            this.janitor = null;
+            this.janitorInterval = 1000 * 60; // By default, clean up evey minute
+            this.expiryThreshold = 60 * 5; // By default, clean up any expired gift 5 minutes after its expiry
 
-            this.onOpen = this.onOpen.bind(this);
-            this.onPing = this.onPing.bind(this);
-            this.onClose = this.onClose.bind(this);
-            this.onError = this.onError.bind(this);
-            this.onMessage = this.onMessage.bind(this);
-
-            this.reconnectTask = null;
-            this.healthCheckTask = null;
+            if (options) {
+                if (options.hasOwnProperty('janitorInterval')) {
+                    this.janitorInterval = options.janitorInterval * 1000 * 60; // janitorInterval is in minutes
+                }
+                if (options.hasOwnProperty('expiryThreshold')) {
+                    this.expiryThreshold = options.expiryThreshold * 60; // expiryThreshold is in minutes
+                }
+            }
         }
 
-        reset() {
-            this.ws = null;
-            if (this.healthCheckTask !== null) {
-                clearInterval(this.healthCheckTask);
-                this.healthCheckTask = null;
-            }
+        initServerConnection(server) {
+            let connection = new Connection(server);
+            connection.on('message', (gift) => this.broadcast(gift));
+            this.connections.push(connection);
         }
 
         run() {
-            if (this.ws === null) {
-                this.closedByUs = false;
-                this.ws = new ws(this.wsAddress);
-                this.ws.on('open', this.onOpen);
-                this.ws.on('ping', this.onPing);
-                this.ws.on('error', this.onError);
-                this.ws.on('close', this.onClose);
-                this.ws.on('message', this.onMessage);
+            this.receivedGifts = new Map();
+            namedGifts.forEach(name => {
+                this.receivedGifts.set(name, new Map());
+            });
+            this.connections.forEach(connection => connection.connect());
+
+            if (this.janitor === null) {
+                this.janitor = setInterval(() => {
+                    const threshold = new Date().valueOf() / 1000 - this.expiryThreshold;
+                    namedGifts.forEach(name => {
+                        const gifts = this.receivedGifts.get(name);
+                        for (let [id, gift] of gifts) {
+                            if (gift.expireAt < threshold) {
+                                gifts.delete(id);
+                            }
+                        }
+                    });
+                }, this.janitorInterval);
             }
-        }
-
-        onOpen() {
-            cprint(`[ Server ] Established connection with ${this.wsAddress}`, colors.green);
-            this.lastPing = +new Date();
-            this.retries = 3;
-            if (this.reconnectTask !== null) {
-                clearInterval(this.reconnectTask);
-                this.reconnectTask = null;
-            }
-            if (this.healthCheckTask === null) {
-                this.healthCheckTask = setInterval(() => {
-                    if (new Date() - this.lastPing > 25000) {
-                        this.close(false);
-                    }
-                }, 5 * 1000);
-            }
-        }
-
-        onError(error) {
-            cprint(`Error in monitor-server: ${error.message}`, colors.red);
-            this.ws.close();
-        }
-
-        onClose(code, reason) {
-            --this.retries;
-            this.reset();
-            cprint(`[ Server ] Lost connection to ${this.wsAddress}`, colors.red);
-            cprint('[ Server ] 尝试重连... ', colors.green);
-
-            if (this.retries > 0) {
-                this.run();
-            } else if (this.reconnectTask === null) {
-                this.reconnectTask = setInterval(() => {
-                    this.run();
-                }, 10 * 1000);
-            }
-        }
-
-        close(closedByUs=true) {
-            this.closedByUs = closedByUs;
-            this.ws && this.ws.close();
-            this.ws = null;
-        }
-
-        onMessage(data) {
-            const body = data.toString('utf8');
-
-            this.broadcast(JSON.parse(body));
-        }
-
-        onPing() {
-            this.lastPing = +new Date();
-            this.ws && this.ws.pong();
         }
 
         broadcast(gift) {
-            cprint(
-                `${gift['id'].toString().padEnd(13)}`
-                + `@${gift['roomid'].toString().padEnd(13)}`
-                + `${gift['type'].padEnd(13)}`
-                + `${gift['name']}`, 
-                colors.cyan
-            );
+            const eventName = namedGifts.includes(gift.type) ? gift.type : 'gift';
+            const gifts = this.receivedGifts.get(eventName);
+            if (gifts && !gifts.has(gift.id)) {
+                cprint(
+                    `${gift['id'].toString().padEnd(16)}`
+                    + `@${gift['roomid'].toString().padEnd(15)}`
+                    + `${gift['type'].padEnd(16)}`
+                    + `${gift['name']}`, 
+                    colors.cyan
+                );
 
-            const namedGifts = [
-                'guard',
-                'storm',
-                'pk',
-            ];
-            const eventName = namedGifts.includes(gift['type']) ? gift['type'] : 'gift';
-
-            this.emit(eventName, gift);
-
+                gifts.set(gift.id, gift);
+                this.emit(eventName, gift);
+            }
         }
 
     }

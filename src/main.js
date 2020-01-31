@@ -18,11 +18,9 @@
 
 
     function main() {
-        const wsHost = settings['wsServer']['ip'];
-        const wsPort = settings['wsServer']['port'];
 
-        const receiver = new RaffleReceiver(wsHost, wsPort);
-        const notifier = new Notifier();
+        const receiver = new RaffleReceiver(settings.wsServer, settings.receiver);
+        const notifier = new Notifier(settings.notifier);
 
 
         const account = new Account('user.json', settings.account);
@@ -32,8 +30,8 @@
 
         const api = new HttpHost(account);
 
-        const httpHost = settings['httpServer']['ip'];
-        const httpPort = settings['httpServer']['port'];
+        const httpHost = settings.httpServer.host;
+        const httpPort = settings.httpServer.port;
         const server = http.createServer(api.app()).listen(httpPort, httpHost);
 
         server.on('error', error => {
