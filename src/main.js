@@ -25,7 +25,7 @@
         const notifier = new Notifier();
 
 
-        const account = new Account('user.json');
+        const account = new Account('user.json', settings.account);
         account.loadFromFile();
 
         setupSchedule({ receiver, notifier, account });
@@ -49,7 +49,7 @@
         try {
             if (account.usable === false) {
                 cprint('Account not usable', colors.yellow);
-                cprint('-------------Account().login---------------', colors.brightBlue);
+                cprint('-------------账号登录中---------------', colors.yellow);
                 account.login().then(() => {
                     cprint('Login successful', colors.green);
 

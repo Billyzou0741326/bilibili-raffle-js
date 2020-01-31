@@ -20,7 +20,7 @@
     class AccountRunner extends Account {
 
         constructor(filename, options) {
-            super(filename, options);
+            super(filename);
             this._tasks = {
                 'pk': new ScheduledTask(),
                 'gift': new ScheduledTask(),
@@ -35,9 +35,26 @@
                 'doublewatch': new DailyTask(),
             };
             this.tasksFilename = 'task-for-' + this.filename;
-            this.blackListed = false;
+            this.blacklisted = false;
+            this.blacklistCheckInterval = 1000 * 60 * 60 * 24; // By default, when blacklisted, check back after 24 hours
+            this.nextBlacklistCheckTime = null;
             this.roomEntered = new Set();
-            this.q = new VirtualQueue(50, 1000);
+            this.maxNumRoomEntered = 30; // By default, only keep at most 30 rooms in entered queue
+            let maxRequestsPerSecond = 50;
+
+            if (options) {
+                if (options.hasOwnProperty('maxRequestsPerSecond')) {
+                    maxRequestsPerSecond = options.maxRequestsPerSecond;
+                }
+                if (options.hasOwnProperty('maxNumRoomEntered')) {
+                    this.maxNumRoomEntered = options.maxNumRoomEntered;
+                }
+                if (options.hasOwnProperty('blacklistCheckInterval')) {
+                    this.blacklistCheckInterval = options.blacklistCheckInterval * 1000 * 60 * 60; // blacklistCheckInterval is in hours
+                }
+            }
+
+            this.q = new VirtualQueue(maxRequestsPerSecond, 1000);
         }
 
         bind() {
@@ -143,7 +160,43 @@
             cprint(`Error - ${error}`, colors.red);
             return null;
         }
-        
+
+        checkErrorResponse(msg) {
+            if (msg.includes('访问被拒绝')) {
+                this.blacklisted = true;
+
+                // If we still have a next check time defined in the future, just leave it alone.
+                if (this.nextBlacklistCheckTime === null || this.nextBlacklistCheckTime <= new Date()) {
+                    this.nextBlacklistCheckTime = new Date(new Date().getTime() + this.blacklistCheckInterval);
+                }
+
+                return Promise.reject(`${msg} -- 已进小黑屋`);
+            }
+
+            if (msg.includes('请先登录')) {
+                cprint('-------------账号重新登录中---------------', colors.yellow);
+                return this.login(true);
+            }
+
+            return Promise.reject(msg);
+        }
+
+        checkBlacklisted() {
+            if (this.blacklisted) {
+                if (new Date() < this.nextBlacklistCheckTime) {
+                    cprint('已进小黑屋，暂停执行', colors.grey);
+                } else {
+                    // May be released by now, so reset the flag to try again.
+                    this.blacklisted = false;
+                    
+                    // Update next check time based on previous check time, not current time.
+                    this.nextBlacklistCheckTime = new Date(this.nextBlacklistCheckTime.getTime() + this.blacklistCheckInterval);
+                }
+            }
+
+            return this.blacklisted;
+        }
+
         /** 主站观看视频 */
         mainWatchVideo() {
             if (this.usable === false) return null;
@@ -188,25 +241,20 @@
                 if (signed === 0) {
                     return Bilibili.liveSign(this.session);
                 } else {
-                    const award = resp['data']['text'];
-                    cprint(award, colors.green);
+                    cprint(`直播签到奖励已领取: ${resp.data.text}`, colors.grey);
                 }
 
             }).then(resp => {
                 if (!resp) return;
 
-                let result = null;
                 const code = resp['code'];
 
                 if (code === 0) {
-                    const award = resp['data']['text'];
-                    cprint(award, colors.green);
+                    cprint(`直播签到奖励: ${resp.data.text}`, colors.green);
                 } else {
                     const msg = resp['msg'] || resp['message'] || '';
-                    result = Promise.reject(`直播签到失败: (${code})${msg}`);
+                    cprint(`直播签到失败: (${code})${msg}`, colors.red);
                 }
-
-                return result;
             }).catch(this.reportHttpError);
         }
 
@@ -214,7 +262,7 @@
         liveSilverBox() {
             if (this.usable === false) return null;
 
-            if (this.blackListed === true) return null;
+            if (this.checkBlacklisted()) return null;
 
             const execute = async () => {
 
@@ -229,12 +277,18 @@
                         const msg = resp['message'] || resp['msg'] || '';
                         if (msg.match(/今天.*领完/) !== null) {
                             cprint(msg, colors.green);
-                            return null;
+                            break;
                         } else {
-                            ++errCount;
-                            if (errCount < 3)
-                                continue;
-                            throw `银瓜子领取失败: (${code})${msg}`;
+                            try {
+                                await this.checkErrorResponse(msg);
+                            } catch(err) {
+                                ++errCount;
+                                if (errCount < 3)
+                                    continue;
+
+                                cprint(`银瓜子领取失败: (${code})${err}`, colors.red);
+                                break;
+                            }
                         }
                     }
 
@@ -243,16 +297,17 @@
                     // 2. Get SilverBox award
                     await sleep(diff * 1000);
                     resp = await Bilibili.getSilverBox(this.session, data);
-                    const msg = resp['message'] || resp['msg'] || '';
-                    if (resp['code'] === 0) {
-                        data = resp['data'];
-                        const silverCount = data['silver'];
-                        const added = data['awardSilver'];
-                        cprint(`银瓜子: ${silverCount} (+${added})`, colors.green);
-                        if (data['isEnd'] !== 0) return null;
+                    const msg = resp.message || resp.msg || '';
+                    if (resp.code === 0) {
+                        cprint(`银瓜子: ${resp.data.silver} (+${resp.data.awardSilver})`, colors.green);
+                        if (data.isEnd !== 0) break;
                     } else {
-                        if (msg.includes('访问被拒绝')) this.blackListed = true;
-                        throw msg;
+                        try {
+                            await this.checkErrorResponse(msg);
+                        } catch(err) {
+                            cprint(`银瓜子领取失败: ${err}`, colors.red);
+                            break;
+                        }
                     }
                 }
             };
@@ -316,9 +371,9 @@
                         const awardText = '双端观看奖励已领取: ' + awardTexts.join('   ');
                         cprint(awardText, colors.grey);
                     } else if (doubleStatus === 0) {
-                        cprint('双端观看未完成', colors.green);
+                        cprint('双端观看未完成', colors.grey);
                     }
-                    
+
                     // Need to watch on web & app for at least 5 minutes. To be sure, wait for 6 minutes.
                     if (done === false) {
                         await sleep(1000 * 60 * 6);
@@ -375,20 +430,14 @@
             if (this.roomEntered.has(roomid) === false) {
                 this.roomEntered.add(roomid);
                 promise = (async () => {
-                    try {
-                        await Bilibili.appRoomEntry(this.session, roomid);
-                    } catch (error) {
-                        cprint(`Error(room) - ${error}`, colors.red);
+                    if (this.roomEntered.size > this.maxNumRoomEntered) {
+                        this.roomEntered = new Set([...this.roomEntered].slice(this.roomEntered.size / 2));
                     }
+
+                    await Bilibili.appRoomEntry(this.session, roomid);
                 })();
             } else {
-
                 promise = Promise.resolve();
-
-                const rooms = Array.from(this.roomEntered);
-                if (rooms.length > 30) {
-                    this.roomEntered = new Set(rooms.slice(15));
-                }
             }
 
             return promise;
@@ -397,80 +446,91 @@
         joinPK(pk) {
             if (this.usable === false) return null;
 
-            this.postRoomEntry(pk['roomid']).then(() => {
+            if (this.checkBlacklisted()) return null;
 
-                return Bilibili.appJoinPK(this.session, pk);
-            }).then(resp => {
+            const execute = async () => {
+                await this.postRoomEntry(pk.roomid);
+                while (true) {
+                    const resp = await Bilibili.appJoinPK(this.session, pk);
+                    if (resp.code === 0) {
+                        cprint(`${resp.data.award_text}`, colors.green);
+                        break;
+                    } else {
+                        const msg = resp.message || resp.msg || '';
+                        try {
+                            await this.checkErrorResponse(msg);
+                        } catch(err) {
+                            cprint(`${pk.id} 获取失败: ${err}`, colors.red);
+                            break;
+                        }
+                    }
 
-                let text = '';
-                let color = colors.green;
-                const code = resp['code'];
-                if (code === 0) {
-                    const data = resp['data'];
-                    text = `${data['award_text']}`;
-                } else {
-                    const msg = resp['message'] || resp['msg'] || '';
-                    text = `${pk.id} 获取失败: ${msg}`;
-                    color = colors.red;
                 }
+            };
 
-                cprint(text, color);
-            }).catch(this.reportHttpError);
+            return execute().catch(this.reportHttpError);
         }
 
         joinGift(gift) {
             if (this.usable === false) return null;
 
-            this.postRoomEntry(gift['roomid']).then(() => {
+            if (this.checkBlacklisted()) return null;
 
-                return Bilibili.appJoinGift(this.session, gift);
-            }).then(resp => {
+            const execute = async () => {
+                await this.postRoomEntry(gift.roomid);
+                while (true) {
+                    const resp = await Bilibili.appJoinGift(this.session, gift);
+                    if (resp.code === 0) {
+                        cprint(`${resp.data.gift_name}+${resp.data.gift_num}`, colors.green);
+                        break;
+                    } else {
+                        const msg = resp.message || resp.msg || '';
+                        try {
+                            await this.checkErrorResponse(msg);
+                        } catch(err) {
+                            cprint(`${gift.id} 获取失败: ${err}`, colors.red);
+                            break;
+                        }
+                    }
 
-                let text = '';
-                let color = colors.green;
-                const code = resp['code'];
-                if (code === 0) {
-                    const data = resp['data'];
-                    const gift_name = resp['data']['gift_name'];
-                    const gift_num = resp['data']['gift_num'];
-                    text = `${gift_name}+${gift_num}`;
-                } else {
-                    const msg = resp['message'] || resp['msg'] || '';
-                    text = `${gift.id} 获取失败: ${msg}`;
-                    color = colors.red;
                 }
+            };
 
-                cprint(text, color);
-            }).catch(this.reportHttpError);
+            return execute().catch(this.reportHttpError);
         }
 
         joinGuard(guard) {
             if (this.usable === false) return null;
 
-            this.postRoomEntry(guard['roomid']).then(() => {
+            if (this.checkBlacklisted()) return null;
 
-                return Bilibili.appJoinGuard(this.session, guard);
-            }).then(resp => {
+            const execute = async () => {
+                await this.postRoomEntry(guard.roomid);
+                while (true) {
+                    const resp = await Bilibili.appJoinGuard(this.session, guard);
+                    if (resp.code === 0) {
+                        cprint(`${resp.data.message}`, colors.green);
+                        break;
+                    } else {
+                        const msg = resp.message || resp.msg || '';
+                        try {
+                            await this.checkErrorResponse(msg);
+                        } catch(err) {
+                            cprint(`${guard.id} 获取失败: ${err}`, colors.red);
+                            break;
+                        }
+                    }
 
-                let text = '';
-                let color = colors.green;
-                const code = resp['code'];
-
-                if (code === 0) {
-                    const data = resp['data'];
-                    text = `${data['message']}`;
-                } else {
-                    const msg = resp['message'] || resp['msg'] || '';
-                    text = `${guard.id} 获取失败: ${msg}`;
-                    color = colors.red;
                 }
+            };
 
-                cprint(text, color);
-            }).catch(this.reportHttpError);
+            return execute().catch(this.reportHttpError);
         }
 
         joinStorm(storm) {
             if (this.usable === false) return null;
+
+            if (this.checkBlacklisted()) return null;
         }
 
         saveTasksToFile() {

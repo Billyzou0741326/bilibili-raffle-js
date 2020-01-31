@@ -11,7 +11,41 @@
                 "to": {
                     "hours": 0,
                     "minutes": 45
-                }
+                },
+                "weekdays": "1-4"
+            },
+            {
+                "from": {
+                    "hours": 8,
+                    "minutes": 0
+                },
+                "to": {
+                    "hours": 2,
+                    "minutes": 0
+                },
+                "weekdays": "5"
+            },
+            {
+                "from": {
+                    "hours": 9,
+                    "minutes": 0
+                },
+                "to": {
+                    "hours": 2,
+                    "minutes": 0
+                },
+                "weekdays": "6"
+            },
+            {
+                "from": {
+                    "hours": 9,
+                    "minutes": 0
+                },
+                "to": {
+                    "hours": 0,
+                    "minutes": 45
+                },
+                "weekdays": "0"
             }
         ]
     },
