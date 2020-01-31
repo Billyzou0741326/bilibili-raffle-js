@@ -13,17 +13,11 @@
 
     class Account {
 
-        constructor(filename, options) {
+        constructor(filename) {
             this.filename = filename || 'user.json';
             this.username = '';
             this.password = '';
-            if (options) {
-                const { username, password, session } = options;
-                this.username = username || '';
-                this.password = password || '';
-                this.session = session || new AccountSession();
-            }
-            this.session = this.session || new AccountSession();
+            this.session = new AccountSession();
             this.usable = false;
             this.bind();
 
@@ -58,9 +52,9 @@
                 }
                 const str = fs.readFileSync(filename);
                 const data = JSON.parse(str);
-                const user = data['user'];
-                if (user['username']) this.username = user['username'];
-                if (user['password']) this.password = user['password'];
+                const user = data.user;
+                if (user.username) this.username = user.username;
+                if (user.password) this.password = user.password;
                 this.session = new AccountSession(data);
                 if (this.session.isComplete()) {
                     this.usable = true;
@@ -70,11 +64,11 @@
             }
         }
 
-        login() {
+        login(forceLogin = false) {
 
             let result = null;
 
-            if (this.session.isComplete() === false) {
+            if (this.session.isComplete() === false || forceLogin) {
                 // 无可用cookies/tokens, login.
 
                 this.usable = false;

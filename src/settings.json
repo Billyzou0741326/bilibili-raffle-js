@@ -6,5 +6,10 @@
     "wsServer": {
         "ip": "warpgate.cat.pdx.edu",
         "port": 8999
+    },
+    "account": {
+        "maxRequestsPerSecond": 50,
+        "maxNumRoomEntered": 30,
+        "blacklistCheckInterval": 24
     }
 }

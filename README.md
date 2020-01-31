@@ -16,7 +16,7 @@
  - 直播签到 (livesign)
  - 直播心跳 (liveheart)
  - 直播抽奖 (guard, gift, pk)
- - 双端观看 (doublewatch) 好像逻辑不完善23333
+ - 双端观看 (doublewatch)
  - 银瓜子领取 (silverbox)
  - 友爱社签到 (idolclubsign)
 
@@ -41,6 +41,7 @@
  - **Config file `/src/settings.json`**
  - httpServer为账号/任务管理界面设定 (未实现 我太菜了)
  - wsServer为舰长+抽奖服务器设定
+ - account为一些账号任务运行杂项设置，包括每分钟最大请求数，已进入房间追踪数组最大长度，在访问被拒绝的情况下小黑屋检查间隔时间（单位为小时）
 
 ```javascript
 {
@@ -51,6 +52,11 @@
     "wsServer": {
         "ip": "warpgate.cat.pdx.edu",   // 如果自建服务器的话请务必换成自己的ip 本机的话是127.0.0.1
         "port": 8999
+    },
+    "account": {
+        "maxRequestsPerSecond": 50,
+        "maxNumRoomEntered": 30,
+        "blacklistCheckInterval": 24
     }
 }
 ```
@@ -85,8 +91,9 @@
 
  - **Config file `/src/client/default-task-settings.json`**
  - **"status": 1 为开启** **"status": 0 为关闭**
- - 默认所有任务开启，所有抽奖、心跳任务于北京时间 08:00 - 0:45 时间段执行
+ - 默认所有任务开启，所有抽奖、心跳任务于北京时间工作日 08:00 - 0:45 ，周末 09:00 - 02:00 时间段执行
  - 修改from、to的hours、minutes数值可以自定义抽奖时间段
+ - weekdays允许值为0-6，对应星期日，一到六。可用逗号分隔，且可以用连接号定义区间，比如0-2,4,6代表周日到周二，加周四和周六
  - 还请不要修改type ~
 
 ```javascript
@@ -103,7 +110,41 @@
                 "to": {
                     "hours": 0,
                     "minutes": 45
-                }
+                },
+                "weekdays": "1-4"
+            },
+            {
+                "from": {
+                    "hours": 8,
+                    "minutes": 0
+                },
+                "to": {
+                    "hours": 2,
+                    "minutes": 0
+                },
+                "weekdays": "5"
+            },
+            {
+                "from": {
+                    "hours": 9,
+                    "minutes": 0
+                },
+                "to": {
+                    "hours": 2,
+                    "minutes": 0
+                },
+                "weekdays": "6"
+            },
+            {
+                "from": {
+                    "hours": 9,
+                    "minutes": 0
+                },
+                "to": {
+                    "hours": 0,
+                    "minutes": 45
+                },
+                "weekdays": "0"
             }
         ]
     },
@@ -119,7 +160,41 @@
                 "to": {
                     "hours": 0,
                     "minutes": 45
-                }
+                },
+                "weekdays": "1-4"
+            },
+            {
+                "from": {
+                    "hours": 8,
+                    "minutes": 0
+                },
+                "to": {
+                    "hours": 2,
+                    "minutes": 0
+                },
+                "weekdays": "5"
+            },
+            {
+                "from": {
+                    "hours": 9,
+                    "minutes": 0
+                },
+                "to": {
+                    "hours": 2,
+                    "minutes": 0
+                },
+                "weekdays": "6"
+            },
+            {
+                "from": {
+                    "hours": 9,
+                    "minutes": 0
+                },
+                "to": {
+                    "hours": 0,
+                    "minutes": 45
+                },
+                "weekdays": "0"
             }
         ]
     },
@@ -135,7 +210,41 @@
                 "to": {
                     "hours": 0,
                     "minutes": 45
-                }
+                },
+                "weekdays": "1-4"
+            },
+            {
+                "from": {
+                    "hours": 8,
+                    "minutes": 0
+                },
+                "to": {
+                    "hours": 2,
+                    "minutes": 0
+                },
+                "weekdays": "5"
+            },
+            {
+                "from": {
+                    "hours": 9,
+                    "minutes": 0
+                },
+                "to": {
+                    "hours": 2,
+                    "minutes": 0
+                },
+                "weekdays": "6"
+            },
+            {
+                "from": {
+                    "hours": 9,
+                    "minutes": 0
+                },
+                "to": {
+                    "hours": 0,
+                    "minutes": 45
+                },
+                "weekdays": "0"
             }
         ]
     },
@@ -151,7 +260,41 @@
                 "to": {
                     "hours": 0,
                     "minutes": 45
-                }
+                },
+                "weekdays": "1-4"
+            },
+            {
+                "from": {
+                    "hours": 8,
+                    "minutes": 0
+                },
+                "to": {
+                    "hours": 2,
+                    "minutes": 0
+                },
+                "weekdays": "5"
+            },
+            {
+                "from": {
+                    "hours": 9,
+                    "minutes": 0
+                },
+                "to": {
+                    "hours": 2,
+                    "minutes": 0
+                },
+                "weekdays": "6"
+            },
+            {
+                "from": {
+                    "hours": 9,
+                    "minutes": 0
+                },
+                "to": {
+                    "hours": 0,
+                    "minutes": 45
+                },
+                "weekdays": "0"
             }
         ]
     },
