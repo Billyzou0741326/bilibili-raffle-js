@@ -40,23 +40,45 @@
 
  - **Config file `/src/settings.json`**
  - httpServer为账号/任务管理界面设定 (未实现 我太菜了)
- - wsServer为舰长+抽奖服务器设定
- - account为一些账号任务运行杂项设置，包括每分钟最大请求数，已进入房间追踪数组最大长度，在访问被拒绝的情况下小黑屋检查间隔时间（单位为小时）
+ - wsServer为舰长+抽奖服务器设定，支持多服务器，每个服务器可单独设置可选参数，例如下示的备用服务器设置可以用不同颜色显示，并且只显示连接和断线信息
+ - receiver为抽奖监听设定
+ - notifier为定时任务通知设定
+ - account为一些账号任务运行杂项设置，包括每秒最大请求数，已进入房间追踪数组最大长度，在访问被拒绝的情况下小黑屋检查间隔时间（单位为小时）
 
 ```javascript
 {
     "httpServer": {
-        "ip": "127.0.0.1",
+        "host": "127.0.0.1",
         "port": 8899
     },
-    "wsServer": {
-        "ip": "warpgate.cat.pdx.edu",   // 如果自建服务器的话请务必换成自己的ip 本机的话是127.0.0.1
-        "port": 8999
+    "wsServer": [
+        {
+            "host": "warpgate.cat.pdx.edu",        // 如果自建服务器的话请务必换成自己的ip 本机的话是127.0.0.1
+            "port": 8999
+        },
+        {
+            "host": "127.0.0.1",
+            "port": 8999,
+            "retries": 1,                          // 【可选设置】断线后短时间内重试次数。如果短时间内重试失败会等待一段时间后尝试重新连接。默认值为3
+            "reconnectWaitTime": 60,               // 【可选设置】断线后重新连接等待时长（单位为秒）。默认值为10秒
+            "enableConnectionErrorLogging": false, // 【可选设置】是否显示连接错误信息（如果备用服务器不是一直在线的话建议关闭）。默认值为true
+            "enableConnectionRetryLogging": false, // 【可选设置】是否显示连接重试信息（如果备用服务器不是一直在线的话建议关闭）。默认值为true
+            "infoColor": "white",                  // 【可选设置】普通连接信息显示颜色。默认值为green（绿色）
+            "errorColor": "yellow"                 // 【可选设置】连接错误信息显示颜色。默认值为red（红色）
+        }
+    ],
+    "receiver": {
+        "janitorInterval": 1,                      // 【可选设置】已参与抽奖的礼物ID缓存清理间隔（单位为分）。默认值为1分钟
+        "expiryThreshold": 5                       // 【可选设置】已参与抽奖的礼物ID在缓存内过期后的存留时长（单位为分）。默认值为5分钟
+    },
+    "notifier": {
+        "heartbeatInterval": 5,                    // 【可选设置】双端直播心跳发送间隔（单位为分）。默认值为5分钟
+        "midnightCheckInterval": 5                 // 【可选设置】午夜判定检测间隔（单位为分）。默认值为60分钟。如果担心银瓜子最后领取时间（正常3轮54分钟，老爷5轮90分钟）超过心跳任务设置的时间太多（默认工作日0:45，周末2：00），可将本设置缩短
     },
     "account": {
-        "maxRequestsPerSecond": 50,
-        "maxNumRoomEntered": 30,
-        "blacklistCheckInterval": 24
+        "maxRequestsPerSecond": 50,                // 【可选设置】每秒最大请求数。默认值为50。设置过大容易造成412风控IP
+        "maxNumRoomEntered": 30,                   // 【可选设置】已进入房间追踪数组最大长度。默认值为30。已在数组内的房间再次抽奖时不再发送进入信息。可以简单理解为同时打开n个房间的直播页面
+        "blacklistCheckInterval": 24               // 【可选设置】在访问被拒绝的情况下小黑屋检查间隔时间（单位为小时）。默认值为24小时。在检测到拒绝访问后不再参与抽奖和领取银瓜子，并且会依此设置等待一段时间后再次检测
     }
 }
 ```

@@ -10,10 +10,7 @@
         'host': settings['httpServer']['ip'] || lh,
         'port': settings['httpServer']['port'] || 8899,
     };
-    const wsServer = {
-        'host': settings['wsServer']['ip'] || lh,
-        'port': settings['wsServer']['port'] || 8999,
-    };
+    const wsServer = settings.wsServer;
 
     process.env['x'] = 'X-Remote-IP';
     const statistics = {
