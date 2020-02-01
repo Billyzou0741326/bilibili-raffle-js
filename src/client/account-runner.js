@@ -300,7 +300,7 @@
                     const msg = resp.message || resp.msg || '';
                     if (resp.code === 0) {
                         cprint(`银瓜子: ${resp.data.silver} (+${resp.data.awardSilver})`, colors.green);
-                        if (data.isEnd !== 0) break;
+                        if (resp.data.isEnd !== 0) break;
                     } else {
                         try {
                             await this.checkErrorResponse(msg);
