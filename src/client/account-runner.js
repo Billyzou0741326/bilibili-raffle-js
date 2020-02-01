@@ -270,23 +270,23 @@
                 while (true) {
                     // 1. Get SilverBox status
                     let resp = await Bilibili.checkSilverBox(this.session);
-                    let data = resp['data'];
+                    let data = resp.data;
                     if (typeof data.time_start === 'undefined') {
 
-                        const code = resp['code'];
-                        const msg = resp['message'] || resp['msg'] || '';
+                        const msg = resp.message || resp.msg || '';
                         if (msg.match(/今天.*领完/) !== null) {
-                            cprint(msg, colors.green);
+                            cprint(msg, colors.grey);
                             break;
                         } else {
                             try {
                                 await this.checkErrorResponse(msg);
+                                continue;
                             } catch(err) {
                                 ++errCount;
                                 if (errCount < 3)
                                     continue;
 
-                                cprint(`银瓜子领取失败: (${code})${err}`, colors.red);
+                                cprint(`银瓜子领取失败: (${resp.code})${err}`, colors.red);
                                 break;
                             }
                         }
@@ -297,11 +297,12 @@
                     // 2. Get SilverBox award
                     await sleep(diff * 1000);
                     resp = await Bilibili.getSilverBox(this.session, data);
-                    const msg = resp.message || resp.msg || '';
+                    data = resp.data;
                     if (resp.code === 0) {
-                        cprint(`银瓜子: ${resp.data.silver} (+${resp.data.awardSilver})`, colors.green);
-                        if (resp.data.isEnd !== 0) break;
+                        cprint(`银瓜子: ${data.silver} (+${data.awardSilver})`, colors.green);
+                        if (data.isEnd !== 0) break;
                     } else {
+                        const msg = resp.message || resp.msg || '';
                         try {
                             await this.checkErrorResponse(msg);
                         } catch(err) {
