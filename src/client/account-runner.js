@@ -206,7 +206,16 @@
                 'cid': 121541439,
             };
 
-            return Bilibili.watchVideo(this.session, info).catch(this.reportHttpError);
+            return Bilibili.watchVideo(this.session, info).then(resp => {
+
+                if (resp.code !== 0) {
+                    const msg = resp.message || resp.msg || '';
+                    return Promise.reject(`视频观看失败: (${resp.code})${msg}`);
+                }
+
+                cprint('视频观看成功', colors.green);
+
+            }).catch(this.reportHttpError);
         }
 
         /** 主站分享视频 */
@@ -215,17 +224,12 @@
 
             return Bilibili.shareVideo(this.session, { aid }).then(resp => {
 
-                const code = resp['code'];
-                const msg = resp['msg'] || resp['message'] || '';
-
-                if (code !== 0) {
-                    return Promise.reject(`视频分享失败: (${code})${msg}`);
+                if (resp.code !== 0) {
+                    const msg = resp.message || resp.msg || '';
+                    return Promise.reject(`视频分享失败: (${resp.code})${msg}`);
                 }
 
-                const data = resp['data']
-                const aid = data['aid'];
-                const result = data['toast'];
-                cprint(result, colors.green);
+                cprint(`视频分享: ${resp.data.toast}`, colors.green);
 
             }).catch(this.reportHttpError);
         }
@@ -273,22 +277,22 @@
                     let data = resp.data;
                     if (typeof data.time_start === 'undefined') {
 
-                        const msg = resp.message || resp.msg || '';
+                        let msg = resp.message || resp.msg || '';
                         if (msg.match(/今天.*领完/) !== null) {
                             cprint(msg, colors.grey);
                             break;
                         } else {
-                            try {
-                                await this.checkErrorResponse(msg);
-                                continue;
-                            } catch(err) {
-                                ++errCount;
-                                if (errCount < 3)
-                                    continue;
-
-                                cprint(`银瓜子领取失败: (${resp.code})${err}`, colors.red);
+                            let showError = false;
+                            await this.checkErrorResponse(msg).catch((err) => {
+                                showError = true;
+                                msg = err;
+                            });
+                            if (showError && ++errCount >= 3) {
+                                cprint(`银瓜子领取失败: (${resp.code})${msg}`, colors.red);
                                 break;
                             }
+
+                            continue;
                         }
                     }
 
@@ -302,11 +306,14 @@
                         cprint(`银瓜子: ${data.silver} (+${data.awardSilver})`, colors.green);
                         if (data.isEnd !== 0) break;
                     } else {
-                        const msg = resp.message || resp.msg || '';
-                        try {
-                            await this.checkErrorResponse(msg);
-                        } catch(err) {
-                            cprint(`银瓜子领取失败: ${err}`, colors.red);
+                        let msg = resp.message || resp.msg || '';
+                        let showError = false;
+                        await this.checkErrorResponse(msg).catch((err) => {
+                            showError = true;
+                            msg = err;
+                        });
+                        if (showError) {
+                            cprint(`银瓜子领取失败: (${resp.code})${msg}`, colors.red);
                             break;
                         }
                     }
@@ -345,8 +352,7 @@
             if (this.usable === false) return null;
 
             const execute = async () => {
-                let done = false;
-                while (!done) {
+                while (true) {
                     // await throws error when a promise is rejected.
                     // execute().catch(...) will handle the error thrown
                     const taskResp = await Bilibili.liveTaskInfo(this.session);
@@ -354,31 +360,27 @@
                     const awards = taskResp['data']['double_watch_info']['awards'];
 
                     if (doubleStatus === 1) {
-                        done = true;
                         const awardResp = await Bilibili.liveDoubleWatch(this.session);
-                        const code = awardResp['code'];
-                        const msg = awardResp['msg'] || awardResp['message'] || '';
-                        if (code !== 0) {
-                            const failedText = `双端观看奖励领取失败: (${code})${msg}`;
-                            cprint(failedText, colors.red);
+                        if (awardResp.code !== 0) {
+                            const msg = awardResp.message || awardResp.msg || '';
+                            cprint(`双端观看奖励领取失败: (${awardResp.code})${msg}`, colors.red);
                         } else {
                             const awardTexts = awards.map(award => `${award.name}(${award.num})`);
                             const awardText = '双端观看奖励: ' + awardTexts.join('   ');
                             cprint(awardText, colors.green);
                         }
+                        break;
                     } else if (doubleStatus === 2) {
-                        done = true;
                         const awardTexts = awards.map(award => `${award.name}(${award.num})`);
                         const awardText = '双端观看奖励已领取: ' + awardTexts.join('   ');
                         cprint(awardText, colors.grey);
+                        break;
                     } else if (doubleStatus === 0) {
                         cprint('双端观看未完成', colors.grey);
                     }
 
                     // Need to watch on web & app for at least 5 minutes. To be sure, wait for 6 minutes.
-                    if (done === false) {
-                        await sleep(1000 * 60 * 6);
-                    }
+                    await sleep(1000 * 60 * 6);
                 }
             };
 
@@ -457,11 +459,14 @@
                         cprint(`${resp.data.award_text}`, colors.green);
                         break;
                     } else {
-                        const msg = resp.message || resp.msg || '';
-                        try {
-                            await this.checkErrorResponse(msg);
-                        } catch(err) {
-                            cprint(`${pk.id} 获取失败: ${err}`, colors.red);
+                        let msg = resp.message || resp.msg || '';
+                        let showError = false;
+                        await this.checkErrorResponse(msg).catch((err) => {
+                            showError = true;
+                            msg = err;
+                        });
+                        if (showError) {
+                            cprint(`${pk.id} 获取失败: ${msg}`, colors.red);
                             break;
                         }
                     }
@@ -485,11 +490,14 @@
                         cprint(`${resp.data.gift_name}+${resp.data.gift_num}`, colors.green);
                         break;
                     } else {
-                        const msg = resp.message || resp.msg || '';
-                        try {
-                            await this.checkErrorResponse(msg);
-                        } catch(err) {
-                            cprint(`${gift.id} 获取失败: ${err}`, colors.red);
+                        let msg = resp.message || resp.msg || '';
+                        let showError = false;
+                        await this.checkErrorResponse(msg).catch((err) => {
+                            showError = true;
+                            msg = err;
+                        });
+                        if (showError) {
+                            cprint(`${gift.id} 获取失败: ${msg}`, colors.red);
                             break;
                         }
                     }
@@ -513,11 +521,14 @@
                         cprint(`${resp.data.message}`, colors.green);
                         break;
                     } else {
-                        const msg = resp.message || resp.msg || '';
-                        try {
-                            await this.checkErrorResponse(msg);
-                        } catch(err) {
-                            cprint(`${guard.id} 获取失败: ${err}`, colors.red);
+                        let msg = resp.message || resp.msg || '';
+                        let showError = false;
+                        await this.checkErrorResponse(msg).catch((err) => {
+                            showError = true;
+                            msg = err;
+                        });
+                        if (showError) {
+                            cprint(`${guard.id} 获取失败: ${msg}`, colors.red);
                             break;
                         }
                     }
