@@ -5,7 +5,7 @@
     },
     "wsServer": [
         {
-            "host": "warpgate.cat.pdx.edu",
+            "host": "bili.minamiktr.com/ws",
             "port": 8999
         }
     ],
