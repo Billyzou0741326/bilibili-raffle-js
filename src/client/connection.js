@@ -23,8 +23,6 @@
         DISCONNECT_PENDING_CLOSE: 11
     };
 
-    const healthCheckInterval = 1000 * 5; // Health check every 5 seconds
-
     class Connection extends EventEmitter {
 
         constructor(server) {
@@ -36,7 +34,15 @@
             }
             this.reconnectWaitTime = 1000 * 10; // By default, try to reconnect after 10 seconds
             if (server.hasOwnProperty('reconnectWaitTime')) {
-                this.reconnectWaitTime = server.reconnectWaitTime * 1000;
+                this.reconnectWaitTime = server.reconnectWaitTime * 1000; // reconnectWaitTime is in seconds
+            }
+            this.healthCheckInterval = 1000 * 5; // By default, health check is performed every 5 seconds
+            if (server.hasOwnProperty('healthCheckInterval')) {
+                this.healthCheckInterval = server.healthCheckInterval * 1000; // healthCheckInterval is in seconds
+            }
+            this.healthCheckThreshold = 1000 * 25; // By default, health check will fail if last ping time was more than 25 seconds ago
+            if (server.hasOwnProperty('healthCheckThreshold')) {
+                this.healthCheckThreshold = server.healthCheckThreshold * 1000; // healthCheckThreshold is in seconds
             }
             this.enableConnectionErrorLogging = true;
             if (server.hasOwnProperty('enableConnectionErrorLogging')) {
@@ -52,7 +58,6 @@
             this.ws = null;
             this.wsAddress = `ws://${server.host}:${server.port}`;
             this.retries = this.numRetries;
-            this.closedByUs = false;
             this.state = State.INIT;
 
             this.onOpen = this.onOpen.bind(this);
@@ -68,7 +73,9 @@
         reset() {
             switch (this.state) {
                 case State.CLOSED:
+                case State.CLOSING:
                 case State.DISCONNECTED:
+                case State.DISCONNECT_PENDING_CLOSE:
                     this.ws = null;
                     if (this.healthCheckTask !== null) {
                         clearInterval(this.healthCheckTask);
@@ -145,11 +152,8 @@
                 case State.INIT:
                 case State.CLOSED:
                     this.state = State.DISCONNECTED;
-                    this.ws = null;
-                    if (this.healthCheckTask !== null) {
-                        clearInterval(this.healthCheckTask);
-                        this.healthCheckTask = null;
-                    }
+                    this.reset();
+                    break;
 
                 default:
                     // Shouldn't happen
@@ -163,13 +167,13 @@
                 case State.ERROR:
                     this.state = State.CLOSING;
                     this.ws && this.ws.close();
-                    this.ws = null;
+                    this.reset();
                     break;
 
                 case State.DISCONNECTING:
                     this.state = State.DISCONNECT_PENDING_CLOSE;
                     this.ws && this.ws.close();
-                    this.ws = null;
+                    this.reset();
                     break;
 
                 case State.CONNECTING:
@@ -196,7 +200,7 @@
 
         onOpen() {
             cprint(`[ Server ] Established connection with ${this.wsAddress}`, this.infoColor);
-            this.lastPing = +new Date();
+            this.lastPing = new Date();
             this.retries = this.numRetries;
             if (this.reconnectTask !== null) {
                 clearInterval(this.reconnectTask);
@@ -227,10 +231,11 @@
 
             if (this.healthCheckTask === null) {
                 this.healthCheckTask = setInterval(() => {
-                    if (new Date() - this.lastPing > 25000) {
-                        this.close(false);
+                    if (new Date() - this.lastPing > this.healthCheckThreshold) {
+                        cprint(`[ Server ] Health check failed for ${this.wsAddress}, will try to reconnect`, this.errorColor);
+                        this.close();
                     }
-                }, healthCheckInterval);
+                }, this.healthCheckInterval);
             }
 
             this.emit('connection', true);
@@ -321,7 +326,7 @@
         }
 
         onPing() {
-            this.lastPing = +new Date();
+            this.lastPing = new Date();
             this.ws && this.ws.pong();
         }
     }
