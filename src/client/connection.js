@@ -73,7 +73,9 @@
         reset() {
             switch (this.state) {
                 case State.CLOSED:
+                case State.CLOSING:
                 case State.DISCONNECTED:
+                case State.DISCONNECT_PENDING_CLOSE:
                     this.ws = null;
                     if (this.healthCheckTask !== null) {
                         clearInterval(this.healthCheckTask);
@@ -168,13 +170,13 @@
                 case State.ERROR:
                     this.state = State.CLOSING;
                     this.ws && this.ws.close();
-                    this.ws = null;
+                    this.reset();
                     break;
 
                 case State.DISCONNECTING:
                     this.state = State.DISCONNECT_PENDING_CLOSE;
                     this.ws && this.ws.close();
-                    this.ws = null;
+                    this.reset();
                     break;
 
                 case State.CONNECTING:
