@@ -152,11 +152,8 @@
                 case State.INIT:
                 case State.CLOSED:
                     this.state = State.DISCONNECTED;
-                    this.ws = null;
-                    if (this.healthCheckTask !== null) {
-                        clearInterval(this.healthCheckTask);
-                        this.healthCheckTask = null;
-                    }
+                    this.reset();
+                    break;
 
                 default:
                     // Shouldn't happen
