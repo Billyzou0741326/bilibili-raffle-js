@@ -114,6 +114,33 @@
          * @params  info        Object
          *          roomid      Int     房间号
          */
+        static appGetInfoByUser(session, info) {
+            const { roomid } = info;
+            const data = {};
+            data['actionKey'] = 'appkey';
+            data['room_id'] = roomid;
+            data['ts'] = Math.floor(new Date().valueOf());
+            data['access_key'] = session['app']['access_token'];
+            const paramstr = Bilibili.parseAppParams(sort(data));
+
+            const request = (RequestBuilder.start()
+                .withHost('api.live.bilibili.com')
+                .withPath('/xlive/app-room/v1/index/getInfoByUser')
+                .withMethod('GET')
+                .withHeaders(appHeaders)
+                .withParams(paramstr)
+                .build()
+            );
+
+            return Bilibili.request(request);
+        }
+
+
+        /**
+         * @params  session     Object
+         * @params  info        Object
+         *          roomid      Int     房间号
+         */
         static appLiveOnlineHeart(session, info) {
             const { roomid } = info;
             const data = {
@@ -416,6 +443,38 @@
             return Bilibili.request(request);
         }
 
+                /**
+         * @static
+         * @param   {Object}    session
+         * @param   {Object}    stormData
+         * @param   {Integer}   stormData.id
+         */
+        static appJoinStorm(session, stormData) {
+            const access_key = session['app']['access_token'];
+            const { id } = stormData;
+            const data = {};
+            Object.assign(data, appCommon);
+            data['access_key'] = access_key;
+            data['actionKey'] = 'appkey';
+            data['device'] = 'android';
+            data['id'] = id;
+            data['ts'] = Math.floor(0.001 * new Date());
+            const payload = Bilibili.parseAppParams(sort(data));
+
+            const request = (RequestBuilder.start()
+                .withHost('api.live.bilibili.com')
+                .withPath('/xlive/lottery-interface/v1/storm/Join')
+                .withMethod('POST')
+                .withHeaders(appHeaders)
+                .withData(payload)
+                .withContentType('application/x-www-form-urlencoded')
+                .build()
+            );
+
+            return Bilibili.request(request);
+        }
+        // */
+
 
         static appSign(string) {
             return crypto.createHash('md5').update(string+appSecret).digest('hex');
@@ -477,6 +536,25 @@
                 .withMethod('GET')
                 .withHeaders(webHeaders)
                 .withCookies(session['web'])
+                .build()
+            );
+
+            return Bilibili.request(request);
+        }
+
+        static webGetInfoByUser(session, info) {
+            const { roomid } = info;
+            const params = {};
+            params['room_id'] = roomid;
+
+
+            const request = (RequestBuilder.start()
+                .withHost('api.live.bilibili.com')
+                .withPath('/xlive/web-room/v1/index/getInfoByUser')
+                .withMethod('GET')
+                .withCookies(session['web'])
+                .withHeaders(webHeaders)
+                .withParams(params)
                 .build()
             );
 
