@@ -149,7 +149,7 @@
             }
         ]
     },
-    "liveheart": {
+    "storm": {
         "type": "scheduled",
         "status": 1,
         "timeperiod": [
@@ -196,6 +196,22 @@
                     "minutes": 45
                 },
                 "weekdays": "0"
+            }
+        ]
+    },
+    "liveheart": {
+        "type": "scheduled",
+        "status": 1,
+        "timeperiod": [
+            {
+                "from": {
+                    "hours": 0,
+                    "minutes": 0
+                },
+                "to": {
+                    "hours": 23,
+                    "minutes": 59
+                }
             }
         ]
     },

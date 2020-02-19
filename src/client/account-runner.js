@@ -327,8 +327,13 @@
         liveHeart(roomid=164725) {
             if (this.usable === false) return null;
 
-            (Bilibili.webLiveOnlineHeart(this.session)
-                .catch(this.reportHttpError)
+            (Promise.all([
+                Bilibili.appGetInfoByUser(this.session, { roomid }).catch(console.log),
+                Bilibili.webGetInfoByUser(this.session, { roomid }).catch(console.log),
+            ])
+                .then(() => {
+                    return Bilibili.webLiveOnlineHeart(this.session, { roomid });
+                })
                 .then(resp => {
                     const code = resp['code'];
                     if (code !== 0) {
@@ -497,7 +502,7 @@
                             msg = err;
                         });
                         if (showError) {
-                            cprint(`${gift.id} 获取失败: ${msg}`, colors.red);
+                            cprint(`${gift.name} ${gift.id} 获取失败: ${msg}`, colors.red);
                             break;
                         }
                     }
@@ -528,7 +533,7 @@
                             msg = err;
                         });
                         if (showError) {
-                            cprint(`${guard.id} 获取失败: ${msg}`, colors.red);
+                            cprint(`${guard.name} ${guard.id} 获取失败: ${msg}`, colors.red);
                             break;
                         }
                     }
@@ -543,6 +548,39 @@
             if (this.usable === false) return null;
 
             if (this.checkBlacklisted()) return null;
+
+            const loop = async () => {
+
+                const startedAt = new Date().valueOf();
+                let i = 0;
+
+                while (new Date().valueOf() - startedAt < 25000) {
+                    const resp = await Bilibili.appJoinStorm(this.session, storm);
+                    const msg = resp['msg'] || resp['message'] || '';
+                    ++i;
+                    if (resp['code'] === 0) {
+                        const gift_name = resp['data']['gift_name'];
+                        const gift_num = resp['data']['gift_num'];
+                        const awardText = `${gift_name}+${gift_num}`;
+                        cprint(awardText, colors.green);
+                        cprint(`Executed ${i} times`, colors.green);
+                        return;
+                    } else if (msg.includes('已经领取')) {
+                        cprint('亿圆已领取', colors.green);
+                        cprint(`Executed ${i} times`, colors.green);
+                        return;
+                    }
+                }
+                cprint(`风暴 ${storm.id} 获取失败`, colors.red);
+                cprint(`Executed ${i} times`, colors.green);
+            };
+
+            try {
+                loop();
+            }
+            catch (error) {
+                cprint(`(Storm) - ${error}`, colors.red);
+            }
         }
 
         saveTasksToFile() {
