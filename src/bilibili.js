@@ -116,10 +116,10 @@
          */
         static appGetInfoByUser(session, info) {
             const { roomid } = info;
-            const data = {};
+            const data = Object.assign(new Object(), appCommon);
             data['actionKey'] = 'appkey';
             data['room_id'] = roomid;
-            data['ts'] = Math.floor(new Date().valueOf());
+            data['ts'] = Math.floor(0.001 * new Date().valueOf());
             data['access_key'] = session['app']['access_token'];
             const paramstr = Bilibili.parseAppParams(sort(data));
 
