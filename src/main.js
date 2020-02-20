@@ -82,7 +82,7 @@
             .on('gift', (g) => account.execute('gift', g))
             .on('guard', (g) => account.execute('guard', g))
             .on('storm', (g) => {
-                if (Math.random() > 0.4) {
+                if (Math.random() <= settings['storm']['rate']) {
                     account.execute('storm', g);
                 }
             }));

@@ -9,6 +9,9 @@
             "port": 8999
         }
     ],
+    "storm": {
+        "rate": 0.6
+    },
     "receiver": {
         "janitorInterval": 1,
         "expiryThreshold": 5

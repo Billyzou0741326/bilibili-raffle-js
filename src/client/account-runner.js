@@ -549,38 +549,64 @@
 
             if (this.checkBlacklisted()) return null;
 
-            const loop = async () => {
+            const start = new Date().valueOf();
+            const interval = 60;              // 60 ms per `join` request, if internet is slower than that
+            const tasks = [];                 // An array of `join` promises
+            let quitAfter = 25000;            // 25 seconds later, if not successful, quit.
+            let quit = false;
+            let i = 0;
+            let message = '';
+            let color = colors.red;
 
-                const startedAt = new Date().valueOf();
-                let i = 0;
-
-                while (new Date().valueOf() - startedAt < 25000) {
-                    const resp = await Bilibili.appJoinStorm(this.session, storm);
-                    const msg = resp['msg'] || resp['message'] || '';
+            const join = async () => {
+                while (!quit) {
+                    const t = Bilibili.appJoinStorm(this.session, storm);
+                    tasks.push(t);
                     ++i;
-                    if (resp['code'] === 0) {
-                        const gift_name = resp['data']['gift_name'];
-                        const gift_num = resp['data']['gift_num'];
-                        const awardText = `${gift_name}+${gift_num}`;
-                        cprint(awardText, colors.green);
-                        cprint(`Executed ${i} times`, colors.green);
-                        return;
-                    } else if (msg.includes('已经领取')) {
-                        cprint('亿圆已领取', colors.green);
-                        cprint(`Executed ${i} times`, colors.green);
-                        return;
+                    await Promise.race( [ t.catch(), sleep(interval) ] );       // whichever is done first, 60 ms or `join` request
+                }
+            };
+            const isDone = (resp) => {
+                const msg = resp['msg'] || resp['message'] || '';
+                let good = false;
+                if (resp['code'] === 0) {
+                    const giftName = resp['data']['gift_name'];
+                    const giftNum = resp['data']['gift_num'];
+                    const awardText = `${giftName}+${giftNum}`;
+                    message = awardText;
+                    color = colors.green;
+                    good = true;
+                }
+                else if (msg.includes('已经领取')) {
+                    message = '亿圆已领取';
+                    color = colors.green;
+                    good = true;
+                }
+                return good;
+            };
+            const setQuitFlag = async () => {
+                try {
+                    while (!quit) {
+                        const results = await Promise.all(tasks);
+                        quit = quit || results.some(response => isDone(response));
+                        quit = quit || (new Date().valueOf() - start > quitAfter);
+                        message = message || `风暴 ${storm.id} 领取失败`;
                     }
                 }
-                cprint(`风暴 ${storm.id} 获取失败`, colors.red);
+                catch (error) {
+                    quit = true;
+                    message = `(Storm) - ${error}`;
+                    color = colors.red;
+                }
+            };
+
+            const execute = async () => {
+                await Promise.all( [ join(), setQuitFlag() ] );
+                cprint(message, color);
                 cprint(`Executed ${i} times`, colors.green);
             };
 
-            try {
-                loop();
-            }
-            catch (error) {
-                cprint(`(Storm) - ${error}`, colors.red);
-            }
+            execute();
         }
 
         saveTasksToFile() {
