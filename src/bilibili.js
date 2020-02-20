@@ -443,7 +443,7 @@
             return Bilibili.request(request);
         }
 
-                /**
+        /**
          * @static
          * @param   {Object}    session
          * @param   {Object}    stormData
