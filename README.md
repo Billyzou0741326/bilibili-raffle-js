@@ -4,8 +4,8 @@
 
 ## Info
  - 此程序不收集任何用户信息/数据
- - 可自建服务器[bilibili-live-monitor-js](https://github.com/Billyzou0741326/bilibili-live-monitor-js), 也可以用默认的设定
- - 包括[bilibili-live-monitor-js](https://github.com/Billyzou0741326/bilibili-live-monitor-js)在内的所有项目永久开源 没有闭源的打算 亦不接受打赏
+ - 可自建服务器[bilibili-live-monitor-ts](https://github.com/Billyzou0741326/bilibili-live-monitor-ts), 也可以用默认的设定
+ - 包括[bilibili-live-monitor-ts](https://github.com/Billyzou0741326/bilibili-live-monitor-ts)在内的所有项目永久开源 没有闭源的打算 亦不接受打赏
  - 实力不济没能写出更多功能 代码也非常难看23333
  - 有bug请务必反馈 Issues就是用来讨论的
  - 祝各位白嫖愉快~
