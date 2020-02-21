@@ -15,6 +15,7 @@
         appSecret,
         appHeaders,
         webHeaders, } = require('../global/config.js');
+    const RateLimiter = require('../task/ratelimiter.js');
     const Xhr = require('../net/xhr.js');
     const RequestBuilder = require('../net/request.js');
 
@@ -170,7 +171,8 @@
         return sorted;
     };
 
-    const xhr = Xhr.newSession();
+    const xhr = new Xhr();
+    xhr.withRateLimiter(new RateLimiter(50, 1000));
 
     const decodeCookies = (cookiestr) => {
         if (typeof cookiestr === 'undefinded') return {};

@@ -590,8 +590,10 @@
                         const results = await Promise.all(tasks);
                         quit = quit || results.some(response => isDone(response));
                         quit = quit || (new Date().valueOf() - start > quitAfter);
-                        message = message || `风暴 ${storm.id} 领取失败`;
                     }
+                    const results = await Promise.all(tasks);
+                    results.some(response => isDone(response));
+                    message = message || `风暴 ${storm.id} 领取失败`;
                 }
                 catch (error) {
                     quit = true;

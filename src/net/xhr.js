@@ -10,21 +10,80 @@
 
     class Xhr {
 
-        static newSession() {
-            return new Xhr();
-        }
-
         constructor() {
+            this._rateLimiter = null;
         }
 
-        request(req) {
-            if (req.method === 'GET') {
-                return this.get(req);
-            } else if (req.method === 'POST') {
-                return this.post(req);
+        withRateLimiter(limiter) {
+            this._rateLimiter = limiter;
+            return this;
+        }
+
+        request(request) {
+            let xhr = null;
+            const options = request.toHttpOptions();
+            if (request.https === true) {
+                xhr = https;
+            } 
+            else {
+                xhr = http;
             }
-            return Promise.reject(
-                new HttpError(`Request method '${req.method}' not Implemented`));
+
+            const sendRequest = () => {
+
+                const promise = new Promise((resolve, reject) => {
+                    const req = (xhr.request(options)
+                        .on('timeout', () => req.abort())
+                        .on('abort', () => reject(new HttpError('Http request aborted')))
+                        .on('error', () => reject(new HttpError('Http request errored')))
+                        .on('close', () => reject(new HttpError('Http request closed')))
+                        .on('response', (response) => {
+                            const code = response.statusCode || 0;
+                            const dataSequence = [];
+                            response.on('aborted', () => reject(new HttpError('Http request aborted')));
+                            response.on('error', (error) => reject(new HttpError(error.message)));
+                            response.on('data', (data) => dataSequence.push(data));
+
+                            if (code >= 200 && code < 300) {
+                                response.on('end', () => {
+                                    let url = `${request.host}${request.path}`;
+                                    let method = request.method;
+                                    const data = Buffer.concat(dataSequence);
+                                    const res = (ResponseBuilder.start()
+                                        .withHttpResponse(response)
+                                        .withUrl(url)
+                                        .withMethod(method)
+                                        .withData(data)
+                                        .build()
+                                    );
+                                    resolve(res);
+                                });
+                            }
+                            else {
+                                reject((new HttpError(`Http status ${code}`)).withStatus(code));
+                            }
+                        })
+                    );
+                    if (request.data) {
+                        req.write(request.data);
+                    }
+                    req.end();
+                });
+
+                return promise;
+            };
+
+            let result = new Promise((resolve) => {
+                if (this._rateLimiter !== null) {
+                    const task = () => { resolve(sendRequest()) };
+                    this._rateLimiter.add(task);
+                }
+                else {
+                    resolve(sendRequest());
+                }
+            });
+
+            return result;
         }
 
         get(req) {
@@ -167,7 +226,7 @@
     const httpAgent = (() => {
         const options = {
             'keepAlive': true,
-            'maxFreeSockets': 20,
+            'maxFreeSockets': 64,
         };
         return new http.Agent(options);
     })();
