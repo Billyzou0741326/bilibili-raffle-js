@@ -10,8 +10,7 @@
     const settings = require('./settings.json');
     const HttpHost = require('./server/httphost.js');
     const Account = require('./client/account-runner.js');
-    const RaffleReceiver = require('./client/receiver.js');
-
+    const { RaffleReceiver, MultiServerRaffleReceiver } = require('./client/receiver.js');
     const Notifier = require('./client/notifier.js');
 
     main();
@@ -19,9 +18,10 @@
 
     function main() {
 
-        const receiver = new RaffleReceiver(settings.wsServer, settings.receiver);
+        const receiver = settings.wsServer.length > 1
+            ? new MultiServerRaffleReceiver(settings.wsServer, settings.receiver)
+            : new RaffleReceiver(settings.wsServer, settings.receiver);
         const notifier = new Notifier(settings.notifier);
-
 
         const account = new Account('user.json', settings.account);
         account.loadFromFile();
