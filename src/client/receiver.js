@@ -47,7 +47,7 @@
         broadcast(eventName, gift) {
             cprint(
                 `${gift['id'].toString().padEnd(16)}`
-                + `@ ${gift['roomid'].toString().padEnd(14)}`
+                + `@${gift['roomid'].toString().padEnd(15)}`
                 + `${gift['type'].padEnd(16)}`
                 + `${gift['name']}`, 
                 colors.cyan
