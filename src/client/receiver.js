@@ -14,7 +14,8 @@
         'guard',
         'storm',
         'pk',
-        'gift'
+        'gift',
+        'anchor'
     ];
     
     class RaffleReceiver extends EventEmitter {
@@ -31,6 +32,37 @@
                     'port': 8999
                 });
             }
+        }
+
+        initServerConnection(server) {
+            let connection = new Connection(server);
+            connection.on('message', (gift) => this.broadcast(namedGifts.includes(gift.type) ? gift.type : 'gift', gift));
+            this.connections.push(connection);
+        }
+
+        run() {
+            this.connections.forEach(connection => connection.connect());
+        }
+
+        broadcast(eventName, gift) {
+            cprint(
+                `${gift['id'].toString().padEnd(16)}`
+                + `@${gift['roomid'].toString().padEnd(15)}`
+                + `${gift['type'].padEnd(16)}`
+                + `${gift['name']}`, 
+                colors.cyan
+            );
+
+            this.emit(eventName, gift);
+        }
+
+    }
+
+    class MultiServerRaffleReceiver extends RaffleReceiver {
+
+        constructor(servers, options) {
+            super(servers, options);
+
             this.janitor = null;
             this.janitorInterval = 1000 * 60; // By default, clean up evey minute
             this.expiryThreshold = 60 * 5; // By default, clean up any expired gift 5 minutes after its expiry
@@ -45,13 +77,8 @@
             }
         }
 
-        initServerConnection(server) {
-            let connection = new Connection(server);
-            connection.on('message', (gift) => this.broadcast(gift));
-            this.connections.push(connection);
-        }
-
         run() {
+            super.run();
             this.receivedGifts = new Map();
             namedGifts.forEach(name => {
                 this.receivedGifts.set(name, new Map());
@@ -63,7 +90,7 @@
                     const threshold = new Date().valueOf() / 1000 - this.expiryThreshold;
                     namedGifts.forEach(name => {
                         const gifts = this.receivedGifts.get(name);
-                        for (let [id, gift] of gifts) {
+                        for (const [id, gift] of gifts) {
                             if (gift.expireAt < threshold) {
                                 gifts.delete(id);
                             }
@@ -73,60 +100,19 @@
             }
         }
 
-        broadcast(gift) {
-            const eventName = namedGifts.includes(gift.type) ? gift.type : 'gift';
+        broadcast(eventName, gift) {
             const gifts = this.receivedGifts.get(eventName);
             if (gifts && !gifts.has(gift.id)) {
-                cprint(
-                    `${gift['id'].toString().padEnd(16)}`
-                    + `@${gift['roomid'].toString().padEnd(15)}`
-                    + `${gift['type'].padEnd(16)}`
-                    + `${gift['name']}`, 
-                    colors.cyan
-                );
-
                 gifts.set(gift.id, gift);
-                this.emit(eventName, gift);
+                super.broadcast(eventName, gift);
             }
         }
 
     }
 
-    module.exports = RaffleReceiver;
-
-    const request = (options, data='') => {
-
-        return new Promise((resolve, reject) => {
-
-            const req = http.request(options, (response) => {
-
-                response.on('error', error => {
-                    reject(`Error: ${error.message}`);
-                });
-
-                if (response.statusCode === 200) {
-                    let dataSequence = [];
-
-                    response.on('data', (data) => {
-                        dataSequence.push(data);
-                    });
-                    response.on('end', () => {
-                        const jsonStr = Buffer.concat(dataSequence).toString();
-                        try {
-                            const jsonObj = JSON.parse(jsonStr);
-                            resolve(jsonObj);
-                        } catch (error) {
-                            reject(`Error: ${error.message}`);
-                        }
-                    });
-                } else {
-                    reject(`Error: Response status code ${response.statusCode}`);
-                }
-            }).on('error', error => {
-                reject(`Error: ${error.message}`);
-            });
-            req.write(data);
-            req.end();
-        });
+    module.exports = {
+        RaffleReceiver,
+        MultiServerRaffleReceiver,
     };
+
 })();
