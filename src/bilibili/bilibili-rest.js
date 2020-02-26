@@ -43,6 +43,7 @@
                 let err = null;
 
                 while (success === false && tries > 0) {
+                    --tries;
                     try {
                         const response = await xhr.request(req);
                         const statusCode = response.status_code;
@@ -58,7 +59,6 @@
                             tries = 0;
                         } else {
                             err = new Error(`Http status ${statusCode}: ${statusMessage}`);
-                            --tries;
                         }
                     } catch (error) {
                         err = error;
