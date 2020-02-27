@@ -23,6 +23,8 @@
     "account": {
         "maxRequestsPerSecond": 50,
         "maxNumRoomEntered": 30,
-        "blacklistCheckInterval": 24
+        "blacklistCheckInterval": 24,
+        "stormJoinMaxInterval": 60,
+        "abandonStormAfter": 25
     }
 }

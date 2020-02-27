@@ -38,6 +38,8 @@
             this.blacklisted = false;
             this.blacklistCheckInterval = 1000 * 60 * 60 * 24; // By default, when blacklisted, check back after 24 hours
             this.nextBlacklistCheckTime = null;
+            this.stormJoinMaxInterval = 60; // By default, max interval between storm 'join' request is 60 ms, if internet is slower than that
+            this.abandonStormAfter = 1000 * 25; // By default, abandon a storm after 25 seconds 
             this.roomEntered = new Set();
             this.maxNumRoomEntered = 30; // By default, only keep at most 30 rooms in entered queue
             let maxRequestsPerSecond = 50;
@@ -51,6 +53,12 @@
                 }
                 if (options.hasOwnProperty('blacklistCheckInterval')) {
                     this.blacklistCheckInterval = options.blacklistCheckInterval * 1000 * 60 * 60; // blacklistCheckInterval is in hours
+                }
+                if (options.hasOwnProperty('stormJoinMaxInterval')) {
+                    this.stormJoinMaxInterval = options.stormJoinMaxInterval; // stormJoinMaxInterval is in milliseconds
+                }
+                if (options.hasOwnProperty('abandonStormAfter')) {
+                    this.abandonStormAfter = options.abandonStormAfter * 1000; // abandonStormAfter is in seconds
                 }
             }
 
@@ -178,6 +186,12 @@
                 return this.login(true);
             }
 
+            if (msg.includes('请稍后再试')) {
+                // Just retry
+                cprint(`${msg} -- 将重新获取`, colors.yellow);
+                return Promise.resolve(true);
+            }
+
             return Promise.reject(msg);
         }
 
@@ -296,7 +310,8 @@
                         }
                     }
 
-                    const diff = data.time_end - Number.parseInt(0.001 * new Date());
+                    const diff = data.time_end - new Date() / 1000;
+                    //cprint(`下一个银瓜子宝箱需要等待${diff.toFixed(3)}秒`, colors.yellow);
 
                     // 2. Get SilverBox award
                     await sleep(diff * 1000);
@@ -549,61 +564,62 @@
 
             if (this.checkBlacklisted()) return null;
 
-            const start = new Date().valueOf();
-            const interval = 60;              // 60 ms per `join` request, if internet is slower than that
+            const start = new Date();
             const tasks = [];                 // An array of `join` promises
-            let quitAfter = 25000;            // 25 seconds later, if not successful, quit.
             let quit = false;
             let i = 0;
             let message = '';
-            let color = colors.red;
+            let claimed = false;
 
             const join = async () => {
                 while (!quit) {
                     const t = Bilibili.appJoinStorm(this.session, storm);
                     tasks.push(t);
                     ++i;
-                    await Promise.race( [ t.catch(), sleep(interval) ] );       // whichever is done first, 60 ms or `join` request
+                    await Promise.race( [ t.catch(), sleep(this.stormJoinMaxInterval) ] );       // whichever is done first, 60 ms or `join` request
                 }
             };
             const isDone = (resp) => {
                 const msg = resp['msg'] || resp['message'] || '';
-                let good = false;
                 if (resp['code'] === 0) {
                     const giftName = resp['data']['gift_name'];
                     const giftNum = resp['data']['gift_num'];
                     const awardText = `${giftName}+${giftNum}`;
                     message = awardText;
-                    color = colors.green;
-                    good = true;
+                    claimed = true;
                 }
                 else if (msg.includes('已经领取')) {
-                    message = message || '亿圆已领取';
-                    color = colors.green;
-                    good = true;
+                    claimed = true;
                 }
-                return good;
+                return claimed;
             };
             const setQuitFlag = async () => {
                 try {
                     while (!quit) {
                         const results = await Promise.all(tasks);
                         quit = quit || results.some(response => isDone(response));
-                        quit = quit || (new Date().valueOf() - start > quitAfter);
+                        quit = quit || (new Date() - start > this.abandonStormAfter);
                     }
                     const results = await Promise.all(tasks);
                     results.every(response => isDone(response));
-                    message = message || `风暴 ${storm.id} 领取失败`;
                 }
                 catch (error) {
                     quit = true;
                     message = `(Storm) - ${error}`;
-                    color = colors.red;
                 }
             };
 
             const execute = async () => {
                 await Promise.all( [ join(), setQuitFlag() ] );
+
+                let color = colors.green;
+                if (claimed) {
+                    message = message || '亿圆已领取';
+                } else {
+                    message = message || `风暴 ${storm.id} 已经超过${this.abandonStormAfter / 1000}秒，放弃领取`;
+                    color = colors.red;
+                }
+
                 cprint(message, color);
                 cprint(`Executed ${i} times`, colors.green);
             };
