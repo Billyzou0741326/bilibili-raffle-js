@@ -14,7 +14,7 @@
                 'liveHeart': null,
                 'midnight': null,
             };
-            this.day = new Clock().getDay();
+            this.day = new Clock().getDayInChina();
             this.heartbeatInterval = 1000 * 60 * 5; // By default, send heartbeat every 5 minutes.
             this.midnightCheckInterval = 1000 * 60 * 60; // By default, check for midnight every 60 minutes.
 
@@ -36,7 +36,7 @@
             }
             if (this.tasks['midnight'] === null) {
                 this.tasks['midnight'] = setInterval(() => {
-                    const day = new Clock().getDay();
+                    const day = new Clock().getDayInChina();
                     if (this.day !== day) {
                         this.emit('midnight');
                         this.day = day;

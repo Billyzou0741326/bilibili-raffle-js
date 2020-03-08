@@ -2,6 +2,8 @@
 
     'use strict';
 
+    const chinaTimeMinutesOffset = 60 * 8; // China Standard Time is UTC+8
+
     class Clock extends Date {
 
         static today() {
@@ -14,9 +16,12 @@
         }
 
         constructor(...args) {
-            // Convert date to Beijing Time
-            const chinaTime = new Date(...args).toLocaleString("en-US", {timeZone: "Asia/Shanghai"});
-            super(chinaTime);
+            super(...args);
+        }
+
+        getDayInChina() {
+            // Return weekday in China Standard Time
+            return new Date(this.valueOf() + (this.getTimezoneOffset() + chinaTimeMinutesOffset) * 60 * 1000).getDay();
         }
 
     }
