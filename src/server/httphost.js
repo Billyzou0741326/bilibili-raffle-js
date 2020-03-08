@@ -177,20 +177,11 @@
             if (this.registerVerifier(json)) {
 
                 const taskname = json['taskname'];
-                const from = Clock.today();
-                const to = Clock.today();
-
                 const rawTimeperiod = json['timeperiod'];
                 let timeperiod = null;
 
                 if (rawTimeperiod) {
-                    const rawFrom = rawTimeperiod['from'];
-                    const rawTo = rawTimeperiod['to'];
-                    
-                    from.setHours(rawFrom['hours'], rawFrom['minutes']);
-                    to.setHours(rawTo['hours'], rawTo['minutes']);
-
-                    timeperiod = new TimePeriod(from, to);
+                    timeperiod = new TimePeriod(rawTimeperiod.from, rawTimeperiod.to);
                 }
 
                 const updated = this.user.register(json['taskname'], { timeperiod });

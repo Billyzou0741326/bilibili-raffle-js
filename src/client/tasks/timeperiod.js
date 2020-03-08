@@ -5,22 +5,29 @@
     const Clock = require('./clock.js');
 
     const oneDay = 1000 * 60 * 60 * 24;
+    const chinaTimeMinutesOffset = 60 * 8; // China Standard Time is UTC+8
 
     class TimePeriod {
 
         /**
-         * @params  from    Clock   Beginning
-         * @params  to      Clock   End
+         * @params  from    { hours: number, minutes: number }   Beginning
+         * @params  to      { hours: number, minutes: number }   End
          */
         constructor(from, to) {
             this.start = this.end = null;
 
             if (from) {
-                this.start = from % oneDay;
+                this.start = (from.hours * 60 + from.minutes - chinaTimeMinutesOffset) * 60 * 1000;
+                if (this.start < 0) {
+                    this.start += oneDay;
+                }
             }
 
             if (to) {
-                this.end = to % oneDay;
+                this.end = (to.hours * 60 + to.minutes - chinaTimeMinutesOffset) * 60 * 1000;
+                if (this.end < 0) {
+                    this.end += oneDay;
+                }
             }
 
             Object.freeze(this);
@@ -47,7 +54,6 @@
         json() {
             let tp = null;
             if (this.start !== null && this.end !== null) {
-                const offset = new Date().getTimezoneOffset();
                 const from = new Date(this.start);
                 const from_hours = from.getHours();
                 const from_minutes = from.getMinutes();
@@ -69,24 +75,6 @@
         }
 
     }
-
-    (function test() {
-        'use strict';
-
-        const start = new Clock(+new Clock() + 1000*60*60*24);
-        start.setHours(1);
-        const end = new Clock();
-        end.setHours(0);
-
-        const now = new Clock();
-
-        const timeframe = new TimePeriod(start, end);
-
-        console.log(timeframe.start);
-        console.log(timeframe.end);
-        console.log(timeframe.inBound(now));
-
-    });
 
     module.exports = TimePeriod;
 

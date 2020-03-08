@@ -5,25 +5,22 @@
     const Clock = require('./clock.js');
     const TimePeriod = require('./timeperiod.js');
 
+    const chinaTimeMinutesOffset = 60 * 8; // China Standard Time is UTC+8
+
     class WeeklySchedule {
 
         constructor(periods) {
-            const midnight = Clock.today();
+            const midnight = { hours: 0, minutes: 0 };
             this.originalPeriods = periods;
             this.timePeriods = [ [], [], [], [], [], [], [] ];
             periods.forEach(period => {
-                const fromTime = new Clock();
-                const toTime = new Clock();
-                fromTime.setHours(period.from.hours, period.from.minutes, 0, 0);
-                toTime.setHours(period.to.hours, period.to.minutes, 0, 0);
-
                 let currentDayTimePeriod = null;
                 let nextDayTimePeriod = null;
-                if (fromTime <= toTime) {
-                    currentDayTimePeriod = new TimePeriod(fromTime, toTime);
+                if (period.from.hours < period.to.hours || (period.from.hours === period.to.hours && period.from.minutes <= period.to.minutes)) {
+                    currentDayTimePeriod = new TimePeriod(period.from, period.to);
                 } else {
-                    currentDayTimePeriod = new TimePeriod(fromTime, midnight);
-                    nextDayTimePeriod = new TimePeriod(midnight, toTime);
+                    currentDayTimePeriod = new TimePeriod(period.from, midnight);
+                    nextDayTimePeriod = new TimePeriod(midnight, period.to);
                 }
 
                 (period.weekdays || '0-6').split(',').forEach(dayRange => {
@@ -49,7 +46,7 @@
         }
 
         inBound(time) {
-            return this.timePeriods[new Clock().getDay()].some(timeperiod => timeperiod.inBound());
+            return this.timePeriods[new Clock().getDayInChina()].some(timeperiod => timeperiod.inBound());
         }
 
         json() {
