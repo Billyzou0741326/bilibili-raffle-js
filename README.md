@@ -119,7 +119,9 @@
 ### 任务设置
 
  - **Config file `/src/client/default-task-settings.json`**
- - **"status": 1 为开启** **"status": 0 为关闭**
+ - **"taskschedules" 定义任务执行时间段，可以定义多个不同的时间段并给予不同的名字**
+ - **"tasks" 定义任务。每个任务 "enabled": true 为开启， false 为关闭。**
+ - **任务的 "schedule" 可以引用一个在 "taskschedules" 里定义的时间段（必须存在）**
  - 默认所有任务开启，所有抽奖、心跳任务于北京时间工作日 08:00 - 0:45 ，周末 09:00 - 02:00 时间段执行
  - 修改from、to的hours、minutes数值可以自定义抽奖时间段
  - weekdays允许值为0-6，对应星期日，一到六。可用逗号分隔，且可以用连接号定义区间，比如0-2,4,6代表周日到周二，加周四和周六
@@ -127,10 +129,8 @@
 
 ```javascript
 {
-    "pk": {
-        "type": "scheduled",
-        "status": 1,
-        "timeperiod": [
+    "taskschedules": {
+        "normal": [
             {
                 "from": {
                     "hours": 8,
@@ -175,187 +175,71 @@
                 },
                 "weekdays": "0"
             }
-        ]
-    },
-    "gift": {
-        "type": "scheduled",
-        "status": 1,
-        "timeperiod": [
+        ],
+        "always": [
             {
                 "from": {
-                    "hours": 8,
+                    "hours": 0,
                     "minutes": 0
                 },
                 "to": {
                     "hours": 0,
-                    "minutes": 45
-                },
-                "weekdays": "1-4"
-            },
-            {
-                "from": {
-                    "hours": 8,
                     "minutes": 0
                 },
-                "to": {
-                    "hours": 2,
-                    "minutes": 0
-                },
-                "weekdays": "5"
-            },
-            {
-                "from": {
-                    "hours": 9,
-                    "minutes": 0
-                },
-                "to": {
-                    "hours": 2,
-                    "minutes": 0
-                },
-                "weekdays": "6"
-            },
-            {
-                "from": {
-                    "hours": 9,
-                    "minutes": 0
-                },
-                "to": {
-                    "hours": 0,
-                    "minutes": 45
-                },
-                "weekdays": "0"
+                "weekdays": "0-6"
             }
         ]
     },
-    "guard": {
-        "type": "scheduled",
-        "status": 1,
-        "timeperiod": [
-            {
-                "from": {
-                    "hours": 8,
-                    "minutes": 0
-                },
-                "to": {
-                    "hours": 0,
-                    "minutes": 45
-                },
-                "weekdays": "1-4"
-            },
-            {
-                "from": {
-                    "hours": 8,
-                    "minutes": 0
-                },
-                "to": {
-                    "hours": 2,
-                    "minutes": 0
-                },
-                "weekdays": "5"
-            },
-            {
-                "from": {
-                    "hours": 9,
-                    "minutes": 0
-                },
-                "to": {
-                    "hours": 2,
-                    "minutes": 0
-                },
-                "weekdays": "6"
-            },
-            {
-                "from": {
-                    "hours": 9,
-                    "minutes": 0
-                },
-                "to": {
-                    "hours": 0,
-                    "minutes": 45
-                },
-                "weekdays": "0"
-            }
-        ]
-    },
-    "liveheart": {
-        "type": "scheduled",
-        "status": 1,
-        "timeperiod": [
-            {
-                "from": {
-                    "hours": 8,
-                    "minutes": 0
-                },
-                "to": {
-                    "hours": 0,
-                    "minutes": 45
-                },
-                "weekdays": "1-4"
-            },
-            {
-                "from": {
-                    "hours": 8,
-                    "minutes": 0
-                },
-                "to": {
-                    "hours": 2,
-                    "minutes": 0
-                },
-                "weekdays": "5"
-            },
-            {
-                "from": {
-                    "hours": 9,
-                    "minutes": 0
-                },
-                "to": {
-                    "hours": 2,
-                    "minutes": 0
-                },
-                "weekdays": "6"
-            },
-            {
-                "from": {
-                    "hours": 9,
-                    "minutes": 0
-                },
-                "to": {
-                    "hours": 0,
-                    "minutes": 45
-                },
-                "weekdays": "0"
-            }
-        ]
-    },
-    "livesign": {
-        "type": "daily",
-        "status": 1,
-        "timeperiod": null
-    },
-    "idolclubsign": {
-        "type": "daily",
-        "status": 1,
-        "timeperiod": null
-    },
-    "mainsharevideo": {
-        "type": "daily",
-        "status": 1,
-        "timeperiod": null
-    },
-    "mainwatchvideo": {
-        "type": "daily",
-        "status": 1,
-        "timeperiod": null
-    },
-    "silverbox": {
-        "type": "daily",
-        "status": 1,
-        "timeperiod": null
-    },
-    "doublewatch": {
-        "type": "daily",
-        "status": 1,
-        "timeperiod": null
+    "tasks": {
+        "pk": {
+            "type": "scheduled",
+            "enabled": true,
+            "schedule": "normal"
+        },
+        "gift": {
+            "type": "scheduled",
+            "enabled": true,
+            "schedule": "normal"
+        },
+        "guard": {
+            "type": "scheduled",
+            "enabled": true,
+            "schedule": "normal"
+        },
+        "storm": {
+            "type": "scheduled",
+            "enabled": true,
+            "schedule": "normal"
+        },
+        "liveheart": {
+            "type": "scheduled",
+            "enabled": true,
+            "schedule": "normal"
+        },
+        "livesign": {
+            "type": "daily",
+            "enabled": true
+        },
+        "idolclubsign": {
+            "type": "daily",
+            "enabled": true
+        },
+        "mainsharevideo": {
+            "type": "daily",
+            "enabled": true
+        },
+        "mainwatchvideo": {
+            "type": "daily",
+            "enabled": true
+        },
+        "silverbox": {
+            "type": "daily",
+            "enabled": true
+        },
+        "doublewatch": {
+            "type": "daily",
+            "enabled": true
+        }
     }
 }
 ```

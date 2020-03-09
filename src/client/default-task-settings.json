@@ -1,8 +1,6 @@
 {
-    "pk": {
-        "type": "scheduled",
-        "status": 1,
-        "timeperiod": [
+    "taskschedules": {
+        "normal": [
             {
                 "from": {
                     "hours": 8,
@@ -47,202 +45,70 @@
                 },
                 "weekdays": "0"
             }
-        ]
-    },
-    "gift": {
-        "type": "scheduled",
-        "status": 1,
-        "timeperiod": [
+        ],
+        "always": [
             {
                 "from": {
-                    "hours": 8,
+                    "hours": 0,
                     "minutes": 0
                 },
                 "to": {
                     "hours": 0,
-                    "minutes": 45
-                },
-                "weekdays": "1-4"
-            },
-            {
-                "from": {
-                    "hours": 8,
                     "minutes": 0
                 },
-                "to": {
-                    "hours": 2,
-                    "minutes": 0
-                },
-                "weekdays": "5"
-            },
-            {
-                "from": {
-                    "hours": 9,
-                    "minutes": 0
-                },
-                "to": {
-                    "hours": 2,
-                    "minutes": 0
-                },
-                "weekdays": "6"
-            },
-            {
-                "from": {
-                    "hours": 9,
-                    "minutes": 0
-                },
-                "to": {
-                    "hours": 0,
-                    "minutes": 45
-                },
-                "weekdays": "0"
+                "weekdays": "0-6"
             }
         ]
     },
-    "guard": {
-        "type": "scheduled",
-        "status": 1,
-        "timeperiod": [
-            {
-                "from": {
-                    "hours": 8,
-                    "minutes": 0
-                },
-                "to": {
-                    "hours": 0,
-                    "minutes": 45
-                },
-                "weekdays": "1-4"
-            },
-            {
-                "from": {
-                    "hours": 8,
-                    "minutes": 0
-                },
-                "to": {
-                    "hours": 2,
-                    "minutes": 0
-                },
-                "weekdays": "5"
-            },
-            {
-                "from": {
-                    "hours": 9,
-                    "minutes": 0
-                },
-                "to": {
-                    "hours": 2,
-                    "minutes": 0
-                },
-                "weekdays": "6"
-            },
-            {
-                "from": {
-                    "hours": 9,
-                    "minutes": 0
-                },
-                "to": {
-                    "hours": 0,
-                    "minutes": 45
-                },
-                "weekdays": "0"
-            }
-        ]
-    },
-    "storm": {
-        "type": "scheduled",
-        "status": 1,
-        "timeperiod": [
-            {
-                "from": {
-                    "hours": 8,
-                    "minutes": 0
-                },
-                "to": {
-                    "hours": 0,
-                    "minutes": 45
-                },
-                "weekdays": "1-4"
-            },
-            {
-                "from": {
-                    "hours": 8,
-                    "minutes": 0
-                },
-                "to": {
-                    "hours": 2,
-                    "minutes": 0
-                },
-                "weekdays": "5"
-            },
-            {
-                "from": {
-                    "hours": 9,
-                    "minutes": 0
-                },
-                "to": {
-                    "hours": 2,
-                    "minutes": 0
-                },
-                "weekdays": "6"
-            },
-            {
-                "from": {
-                    "hours": 9,
-                    "minutes": 0
-                },
-                "to": {
-                    "hours": 0,
-                    "minutes": 45
-                },
-                "weekdays": "0"
-            }
-        ]
-    },
-    "liveheart": {
-        "type": "scheduled",
-        "status": 1,
-        "timeperiod": [
-            {
-                "from": {
-                    "hours": 0,
-                    "minutes": 0
-                },
-                "to": {
-                    "hours": 23,
-                    "minutes": 59
-                }
-            }
-        ]
-    },
-    "livesign": {
-        "type": "daily",
-        "status": 1,
-        "timeperiod": null
-    },
-    "idolclubsign": {
-        "type": "daily",
-        "status": 1,
-        "timeperiod": null
-    },
-    "mainsharevideo": {
-        "type": "daily",
-        "status": 1,
-        "timeperiod": null
-    },
-    "mainwatchvideo": {
-        "type": "daily",
-        "status": 1,
-        "timeperiod": null
-    },
-    "silverbox": {
-        "type": "daily",
-        "status": 1,
-        "timeperiod": null
-    },
-    "doublewatch": {
-        "type": "daily",
-        "status": 1,
-        "timeperiod": null
+    "tasks": {
+        "pk": {
+            "type": "scheduled",
+            "enabled": true,
+            "schedule": "normal"
+        },
+        "gift": {
+            "type": "scheduled",
+            "enabled": true,
+            "schedule": "normal"
+        },
+        "guard": {
+            "type": "scheduled",
+            "enabled": true,
+            "schedule": "normal"
+        },
+        "storm": {
+            "type": "scheduled",
+            "enabled": true,
+            "schedule": "normal"
+        },
+        "liveheart": {
+            "type": "scheduled",
+            "enabled": true,
+            "schedule": "normal"
+        },
+        "livesign": {
+            "type": "daily",
+            "enabled": true
+        },
+        "idolclubsign": {
+            "type": "daily",
+            "enabled": true
+        },
+        "mainsharevideo": {
+            "type": "daily",
+            "enabled": true
+        },
+        "mainwatchvideo": {
+            "type": "daily",
+            "enabled": true
+        },
+        "silverbox": {
+            "type": "daily",
+            "enabled": true
+        },
+        "doublewatch": {
+            "type": "daily",
+            "enabled": true
+        }
     }
 }
