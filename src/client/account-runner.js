@@ -648,17 +648,25 @@
             }
             const str = fs.readFileSync(filename);
             const data = JSON.parse(str);
-            for (const [taskname, settings] of Object.entries(data)) {
-                if (settings.status === 1) {
+            const schedules = new Map();
+            for (const [name, schedule] of Object.entries(data.taskschedules)) {
+                if (Array.isArray(schedule)) {
+                    schedules.set(name, schedule);
+                }
+            }
+            for (const [taskname, settings] of Object.entries(data.tasks)) {
+                if (settings.enabled) {
                     const type = settings.type;
                     if (type === 'daily') {
                         this.register(taskname);
                     }
                     else if (type === 'scheduled') {
-                        const tpList = settings.timeperiod;
-                        const hasList = tpList !== null && Array.isArray(tpList);
-                        if (hasList && tpList.length > 0) {
-                            this.register(taskname,  { 'timeperiod': tpList });
+                        if (settings.schedule) {
+                            if (schedules.has(settings.schedule)) {
+                                this.register(taskname,  { 'timeperiod': schedules.get(settings.schedule) });
+                            } else {
+                                cprint(`Error in config: task ${taskname} - cannot find schedule name ${settings.schedule}`, colors.red);
+                            }
                         }
                     }
                 }
