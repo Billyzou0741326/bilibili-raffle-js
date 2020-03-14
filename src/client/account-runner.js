@@ -570,6 +570,7 @@
             let i = 0;
             let message = '';
             let claimed = false;
+            let setQuitFlagWhenTimeout = null;
 
             const join = async () => {
                 while (!quit) {
@@ -598,7 +599,6 @@
                     while (!quit) {
                         const results = await Promise.all(tasks);
                         quit = quit || results.some(response => isDone(response));
-                        quit = quit || (new Date() - start > this.abandonStormAfter);
                     }
                     const results = await Promise.all(tasks);
                     results.every(response => isDone(response));
@@ -607,9 +607,18 @@
                     quit = true;
                     message = `(Storm) - ${error}`;
                 }
+                if (setQuitFlagWhenTimeout !== null) {
+                    clearTimeout(setQuitFlagWhenTimeout);
+                    setQuitFlagWhenTimeout = null;
+                }
             };
 
             const execute = async () => {
+                setQuitFlagWhenTimeout = setTimeout(() => {
+                    quit = true;
+                    setQuitFlagWhenTimeout = null;
+                }, this.abandonStormAfter);
+
                 await Promise.all( [ join(), setQuitFlag() ] );
 
                 let color = colors.green;
