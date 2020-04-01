@@ -36,7 +36,7 @@
 
         initServerConnection(server) {
             let connection = new Connection(server);
-            connection.on('message', (gift) => this.broadcast(namedGifts.includes(gift.type) ? gift.type : 'gift', gift));
+            connection.on('message', (gift) => this.broadcast(namedGifts.includes(gift.category) ? gift.category : '', gift));
             this.connections.push(connection);
         }
 
