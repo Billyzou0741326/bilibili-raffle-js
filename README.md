@@ -1,6 +1,6 @@
 # bilibili-raffle-js (b站直播挂机、高能+舰长抽取)
-![Github](https://img.shields.io/github/license/Billyzou0741326/bilibili-live-raffle-monitor)
-![Github](https://img.shields.io/badge/nodejs-10.16.3-blue)
+![Github license](https://img.shields.io/badge/license-MIT-brightgreen)
+![Github nodejs](https://img.shields.io/badge/nodejs-10.16.3-blue)
 
 ## Info
  - 此程序不收集任何用户信息/数据
