@@ -5,8 +5,7 @@
     },
     "wsServer": [
         {
-            "host": "bili.minamiktr.com/ws",
-            "port": 8999
+            "address": "ws://bili.minamiktr.com/ws"
         }
     ],
     "storm": {

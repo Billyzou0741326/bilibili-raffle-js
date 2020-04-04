@@ -56,7 +56,7 @@
             this.errorColor = colors[server.errorColor || 'red'];
 
             this.ws = null;
-            this.wsAddress = `ws://${server.host}:${server.port}`;
+            this.wsAddress = `${server.address}`;
             this.retries = this.numRetries;
             this.state = State.INIT;
 

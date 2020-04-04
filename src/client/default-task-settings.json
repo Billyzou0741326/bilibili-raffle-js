@@ -53,8 +53,8 @@
                     "minutes": 0
                 },
                 "to": {
-                    "hours": 0,
-                    "minutes": 0
+                    "hours": 23,
+                    "minutes": 59
                 },
                 "weekdays": "0-6"
             }
@@ -84,7 +84,7 @@
         "liveheart": {
             "type": "scheduled",
             "enabled": true,
-            "schedule": "normal"
+            "schedule": "always"
         },
         "livesign": {
             "type": "daily",
