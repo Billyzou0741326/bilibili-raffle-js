@@ -29,7 +29,7 @@
 ## pm2运行
  1. `npm install` 安装依赖库
  2. `npm install -g pm2` 全局安装PM2
- 3. `pm2 src/main.js` 运行程序
+ 3. `pm2 start src/main.js` 运行程序
  4. `pm2 ls` 查看运行状态 名为main那个就是了 (如果状态是errored 用下一步看下日志 反馈issues)
  5. `pm2 logs main --lines 100` 查看100行日志 (**CTRL-C 退出日志状态**)
  6. `pm2 stop main; pm2 delete main` 停止+删除程序进程
