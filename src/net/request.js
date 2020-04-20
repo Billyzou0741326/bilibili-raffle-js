@@ -126,6 +126,7 @@
             this.method = this.method || 'GET';
             this.data = this.data || '';
             this.headers = this.headers || { 'Connection': 'close' };
+            this.headers['Host'] = this.host;
             this.contentType = this.contentType || 'application/x-www-form-urlencoded';
             if (this.cookies) {
                 const headers = { 'Cookie': this.cookies };

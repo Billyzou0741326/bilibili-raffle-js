@@ -8,7 +8,6 @@
     const colors = require('colors/safe');
 
     const settings = require('./settings.json');
-    const HttpHost = require('./server/httphost.js');
     const Account = require('./client/account-runner.js');
     const { RaffleReceiver, MultiServerRaffleReceiver } = require('./client/receiver.js');
     const Notifier = require('./client/notifier.js');
@@ -27,21 +26,6 @@
         account.loadFromFile();
 
         setupSchedule({ receiver, notifier, account });
-
-        const api = new HttpHost(account);
-
-        const httpHost = settings.httpServer.host;
-        const httpPort = settings.httpServer.port;
-        const server = http.createServer(api.app()).listen(httpPort, httpHost);
-
-        server.on('error', error => {
-            if (error.code === 'EADDRINUSE') {
-                cprint(`未能建立http服务 - 端口${httpPort}已被占用`, colors.red);
-                cprint('建议修改``settings.json``中的httpServer.port值', colors.red);
-            } else {
-                cprint(`Error(httpServer): ${error.message}`, colors.red);
-            }
-        });
 
         /** 读取/登录 */
         try {
