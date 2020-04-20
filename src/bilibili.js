@@ -41,10 +41,11 @@
 
                 const data = {};
                 Object.assign(data, appCommon);
-                data['sid'] = resp['sid'];
                 data['username'] = username;
                 data['password'] = hashedPasswd;
                 data['ts'] = Number.parseInt(0.001 * new Date());
+
+                const headers = Object.assign(new Object(), appHeaders);
 
                 const payload = Bilibili.parseAppParams(sort(data));
 
@@ -52,7 +53,7 @@
                     .withHost('passport.bilibili.com')
                     .withPath('/api/v3/oauth2/login')
                     .withMethod('POST')
-                    .withHeaders(appHeaders)
+                    .withHeaders(headers)
                     .withData(payload)
                     .withContentType('application/x-www-form-urlencoded')
                     .withHttps()
@@ -71,11 +72,13 @@
             data['ts'] = Number.parseInt(0.001 * new Date());
             const payload = Bilibili.parseAppParams(sort(data));
 
+            const headers = Object.assign(new Object(), appHeaders);
+
             const request = (RequestBuilder.start()
                 .withHost('passport.bilibili.com')
                 .withPath('/api/oauth2/getKey')
                 .withMethod('POST')
-                .withHeaders(appHeaders)
+                .withHeaders(headers)
                 .withData(payload)
                 .withContentType('application/x-www-form-urlencoded')
                 .withHttps()
@@ -94,11 +97,13 @@
             data['refresh_token'] = refresh_token;
             const payload = Bilibili.parseAppParams(sort(data));
 
+            const headers = Object.assign(new Object(), appHeaders);
+
             const request = (RequestBuilder.start()
                 .withHost('passport.bilibili.com')
                 .withPath('/api/oauth2/refreshToken')
                 .withMethod('POST')
-                .withHeaders(appHeaders)
+                .withHeaders(headers)
                 .withData(payload)
                 .withContentType('application/x-www-form-urlencoded')
                 .withHttps()
@@ -123,11 +128,13 @@
             data['access_key'] = session['app']['access_token'];
             const paramstr = Bilibili.parseAppParams(sort(data));
 
+            const headers = Object.assign(new Object(), appHeaders);
+
             const request = (RequestBuilder.start()
                 .withHost('api.live.bilibili.com')
                 .withPath('/xlive/app-room/v1/index/getInfoByUser')
                 .withMethod('GET')
-                .withHeaders(appHeaders)
+                .withHeaders(headers)
                 .withParams(paramstr)
                 .build()
             );
@@ -156,11 +163,13 @@
             params['ts'] = Number.parseInt(0.001 * new Date());
             const paramstr = Bilibili.parseAppParams(sort(params));
 
+            const headers = Object.assign(new Object(), appHeaders);
+
             const request = (RequestBuilder.start()
                 .withHost('api.live.bilibili.com')
                 .withPath('/heartbeat/v1/OnLine/mobileOnline')
                 .withMethod('POST')
-                .withHeaders(appHeaders)
+                .withHeaders(headers)
                 .withParams(paramstr)
                 .withData(payload)
                 .withContentType('application/x-www-form-urlencoded')
@@ -178,11 +187,13 @@
             params['ts'] = Number.parseInt(+new Date() / 1000);
             const paramstr = Bilibili.parseAppParams(params);
 
+            const headers = Object.assign(new Object(), appHeaders);
+
             const request = (RequestBuilder.start()
                 .withHost('api.live.bilibili.com')
                 .withPath('/lottery/v1/SilverBox/getCurrentTask')
                 .withMethod('GET')
-                .withHeaders(appHeaders)
+                .withHeaders(headers)
                 .withParams(paramstr)
                 .build()
             );
@@ -207,11 +218,13 @@
             params['ts'] = Number.parseInt(+new Date() / 1000);
             const paramstr = Bilibili.parseAppParams(params);
 
+            const headers = Object.assign(new Object(), appHeaders);
+
             const request = (RequestBuilder.start()
                 .withHost('api.live.bilibili.com')
                 .withPath('/lottery/v1/SilverBox/getAward')
                 .withMethod('GET')
-                .withHeaders(appHeaders)
+                .withHeaders(headers)
                 .withParams(paramstr)
                 .build()
             );
@@ -236,11 +249,13 @@
             params['ts'] = Number.parseInt(0.001 * new Date());
             const paramstr = Bilibili.parseAppParams(params);
 
+            const headers = Object.assign(new Object(), appHeaders);
+
             const request = (RequestBuilder.start()
                 .withHost('api.vc.bilibili.com')
                 .withPath('/link_setting/v1/link_setting/sign_in')
                 .withMethod('GET')
-                .withHeaders(appHeaders)
+                .withHeaders(headers)
                 .withParams(paramstr)
                 .build()
             );
@@ -267,11 +282,13 @@
             data['from'] = 'main.ugc-video-detail.0.0';
             const payload = Bilibili.parseAppParams(sort(data));
 
+            const headers = Object.assign(new Object(), appHeaders);
+
             const request = (RequestBuilder.start()
                 .withHost('app.bilibili.com')
                 .withPath('/x/v2/view/share/complete')
                 .withMethod('POST')
-                .withHeaders(appHeaders)
+                .withHeaders(headers)
                 .withData(payload)
                 .withContentType('application/x-www-form-urlencoded')
                 .build()
@@ -293,11 +310,13 @@
             data['ts'] = Number.parseInt(0.001 * new Date());
             const payload = Bilibili.parseAppParams(sort(data));
 
+            const headers = Object.assign(new Object(), appHeaders);
+
             const request = (RequestBuilder.start()
                 .withHost('api.live.bilibili.com')
                 .withPath('/room/v1/Room/room_entry_action')
                 .withMethod('POST')
-                .withHeaders(appHeaders)
+                .withHeaders(headers)
                 .withData(payload)
                 .withContentType('application/x-www-form-urlencoded')
                 .build()
@@ -325,11 +344,13 @@
             data['uuid'] = getUUID();
             const payload = Bilibili.parseAppParams(sort(data));
 
+            const headers = Object.assign(new Object(), appHeaders);
+
             const request = (RequestBuilder.start()
                 .withHost('live-trace.bilibili.com')
                 .withPath('/xlive/data-interface/v1/heartbeat/mobileEntry')
                 .withMethod('POST')
-                .withHeaders(appHeaders)
+                .withHeaders(headers)
                 .withData(payload)
                 .withContentType('application/x-www-form-urlencoded')
                 .build()
@@ -360,11 +381,13 @@
             data['ts'] = Number.parseInt(0.001 * new Date());
             const payload = Bilibili.parseAppParams(sort(data));
 
+            const headers = Object.assign(new Object(), appHeaders);
+
             const request = (RequestBuilder.start()
                 .withHost('api.live.bilibili.com')
                 .withPath('/xlive/lottery-interface/v4/smalltv/Getaward')
                 .withMethod('POST')
-                .withHeaders(appHeaders)
+                .withHeaders(headers)
                 .withData(payload)
                 .withContentType('application/x-www-form-urlencoded')
                 .build()
@@ -394,11 +417,13 @@
             data['ts'] = Number.parseInt(0.001 * new Date());
             const payload = Bilibili.parseAppParams(sort(data));
 
+            const headers = Object.assign(new Object(), appHeaders);
+
             const request = (RequestBuilder.start()
                 .withHost('api.live.bilibili.com')
                 .withPath('/xlive/lottery-interface/v1/pk/join')
                 .withMethod('POST')
-                .withHeaders(appHeaders)
+                .withHeaders(headers)
                 .withData(payload)
                 .withContentType('application/x-www-form-urlencoded')
                 .build()
@@ -430,11 +455,13 @@
             data['ts'] = Number.parseInt(0.001 * new Date());
             const payload = Bilibili.parseAppParams(sort(data));
 
+            const headers = Object.assign(new Object(), appHeaders);
+
             const request = (RequestBuilder.start()
                 .withHost('api.live.bilibili.com')
                 .withPath('/xlive/lottery-interface/v2/Lottery/join')
                 .withMethod('POST')
-                .withHeaders(appHeaders)
+                .withHeaders(headers)
                 .withData(payload)
                 .withContentType('application/x-www-form-urlencoded')
                 .build()
@@ -461,11 +488,13 @@
             data['ts'] = Math.floor(0.001 * new Date());
             const payload = Bilibili.parseAppParams(sort(data));
 
+            const headers = Object.assign(new Object(), appHeaders);
+
             const request = (RequestBuilder.start()
                 .withHost('api.live.bilibili.com')
                 .withPath('/xlive/lottery-interface/v1/storm/Join')
                 .withMethod('POST')
-                .withHeaders(appHeaders)
+                .withHeaders(headers)
                 .withData(payload)
                 .withContentType('application/x-www-form-urlencoded')
                 .build()
