@@ -34,6 +34,7 @@
                 'silverbox': new DailyTask(),
                 'doublewatch': new DailyTask(),
             };
+            this._stormPending = false;
             this.tasksFilename = 'task-for-' + this.filename;
             this.blacklisted = false;
             this.blacklistCheckInterval = 1000 * 60 * 60 * 24; // By default, when blacklisted, check back after 24 hours
@@ -562,8 +563,11 @@
         joinStorm(storm) {
             if (this.usable === false) return null;
 
+            if (this._stormPending) return null;
+
             if (this.checkBlacklisted()) return null;
 
+            this._stormPending = true;
             const start = new Date();
             const tasks = [];                 // An array of `join` promises
             let quit = false;
@@ -631,6 +635,7 @@
 
                 cprint(message, color);
                 cprint(`Executed ${i} times`, colors.green);
+                this._stormPending = false;
             };
 
             execute();

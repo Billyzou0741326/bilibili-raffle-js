@@ -172,7 +172,7 @@
     };
 
     const xhr = new Xhr();
-    xhr.withRateLimiter(new RateLimiter(50, 1000));
+    xhr.withRateLimiter(new RateLimiter(30, 1000));
 
     const decodeCookies = (cookiestr) => {
         if (typeof cookiestr === 'undefinded') return {};
